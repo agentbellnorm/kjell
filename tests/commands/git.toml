@@ -1,0 +1,79 @@
+[[tests]]
+input = "git log"
+expect = "read"
+
+[[tests]]
+input = "git log --oneline -20"
+expect = "read"
+
+[[tests]]
+input = "git diff"
+expect = "read"
+
+[[tests]]
+input = "git status"
+expect = "read"
+
+[[tests]]
+input = "git show HEAD"
+expect = "read"
+
+[[tests]]
+input = "git branch"
+expect = "read"
+
+[[tests]]
+input = "git remote -v"
+expect = "read"
+
+[[tests]]
+input = "git fetch"
+expect = "read"
+
+[[tests]]
+input = "git commit -m 'feat: spawn'"
+expect = "write"
+
+[[tests]]
+input = "git push"
+expect = "write"
+
+[[tests]]
+input = "git push --force"
+expect = "write"
+
+[[tests]]
+input = "git add ."
+expect = "write"
+
+[[tests]]
+input = "git checkout main"
+expect = "write"
+
+[[tests]]
+input = "git merge main"
+expect = "write"
+
+[[tests]]
+input = "git rebase main"
+expect = "write"
+
+[[tests]]
+input = "git reset --hard"
+expect = "write"
+
+[[tests]]
+input = "git stash"
+expect = "write"
+
+[[tests]]
+input = "git pull"
+expect = "write"
+
+[[tests]]
+input = "git init"
+expect = "write"
+
+[[tests]]
+input = "git clone https://github.com/foo/bar.git"
+expect = "write"

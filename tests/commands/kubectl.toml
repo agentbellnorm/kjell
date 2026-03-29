@@ -1,0 +1,27 @@
+[[tests]]
+input = "kubectl get pods"
+expect = "read"
+
+[[tests]]
+input = "kubectl describe pod my-pod"
+expect = "read"
+
+[[tests]]
+input = "kubectl logs my-pod"
+expect = "read"
+
+[[tests]]
+input = "kubectl apply -f deployment.yaml"
+expect = "write"
+
+[[tests]]
+input = "kubectl delete pod my-pod"
+expect = "write"
+
+[[tests]]
+input = "kubectl exec pod -- ls"
+expect = "read"
+
+[[tests]]
+input = "kubectl exec pod -- rm -rf /"
+expect = "write"

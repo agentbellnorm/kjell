@@ -1,0 +1,29 @@
+command = "go"
+default = "unknown"
+
+[subcommands.version]
+default = "read"
+
+[subcommands.build]
+default = "write"
+
+[subcommands.test]
+default = "read"
+
+[subcommands.run]
+default = "unknown"
+
+[subcommands.mod]
+default = "write"
+
+[subcommands.get]
+default = "write"
+
+[subcommands.vet]
+default = "read"
+
+[subcommands.fmt]
+default = "write"
+
+[subcommands.doc]
+default = "read"

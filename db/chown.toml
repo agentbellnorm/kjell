@@ -1,0 +1,2 @@
+command = "chown"
+default = "write"

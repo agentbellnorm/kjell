@@ -1,0 +1,22 @@
+[[tests]]
+input = "echo hello > file.txt"
+expect = "write"
+note = "Redirect operator makes it a write regardless of command"
+
+[[tests]]
+input = "echo msg >> log.txt"
+expect = "write"
+
+[[tests]]
+input = "grep error log.txt > output.txt"
+expect = "write"
+
+[[tests]]
+input = "cat file 2> /dev/null"
+expect = "write"
+note = "stderr redirect is still a write"
+
+[[tests]]
+input = "sort < input.txt"
+expect = "read"
+note = "Input redirect is not a write"

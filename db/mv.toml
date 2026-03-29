@@ -1,0 +1,2 @@
+command = "mv"
+default = "write"

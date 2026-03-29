@@ -1,0 +1,4 @@
+command = "nice"
+default = "read"
+recursive = true
+inner_command_position = 1

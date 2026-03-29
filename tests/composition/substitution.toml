@@ -1,0 +1,12 @@
+[[tests]]
+input = "echo $(ls)"
+expect = "read"
+
+[[tests]]
+input = "echo $(rm file)"
+expect = "write"
+
+[[tests]]
+input = "cat $(rm -rf /)"
+expect = "write"
+note = "Command substitution contains destructive command"

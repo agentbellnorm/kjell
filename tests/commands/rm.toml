@@ -1,0 +1,11 @@
+[[tests]]
+input = "rm file.txt"
+expect = "write"
+
+[[tests]]
+input = "rm -rf /"
+expect = "write"
+
+[[tests]]
+input = "rm -f tmp.log"
+expect = "write"

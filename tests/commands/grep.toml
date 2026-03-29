@@ -1,0 +1,11 @@
+[[tests]]
+input = "grep -r TODO src/"
+expect = "read"
+
+[[tests]]
+input = "grep error log.txt"
+expect = "read"
+
+[[tests]]
+input = "grep -v -E 'ls|cd|gs' file"
+expect = "read"

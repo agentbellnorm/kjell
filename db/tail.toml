@@ -1,0 +1,2 @@
+command = "tail"
+default = "read"

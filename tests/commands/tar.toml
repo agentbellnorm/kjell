@@ -1,0 +1,11 @@
+[[tests]]
+input = "tar -tf archive.tar"
+expect = "read"
+
+[[tests]]
+input = "tar -cf archive.tar dir/"
+expect = "write"
+
+[[tests]]
+input = "tar -xf archive.tar"
+expect = "write"

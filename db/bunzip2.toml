@@ -1,0 +1,2 @@
+command = "bunzip2"
+default = "write"

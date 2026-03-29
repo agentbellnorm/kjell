@@ -1,0 +1,35 @@
+command = "gh"
+default = "unknown"
+
+[subcommands.repo]
+default = "read"
+
+[subcommands.issue]
+default = "read"
+
+[subcommands.pr]
+default = "read"
+
+[subcommands.run]
+default = "read"
+
+[subcommands.workflow]
+default = "read"
+
+[subcommands.release]
+default = "read"
+
+[subcommands.gist]
+default = "read"
+
+[subcommands.search]
+default = "read"
+
+[subcommands.browse]
+default = "read"
+
+[subcommands.auth]
+default = "read"
+
+[subcommands.api]
+default = "unknown"

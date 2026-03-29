@@ -1,0 +1,25 @@
+command = "curl"
+default = "read"
+
+[[flags]]
+flag = ["-X", "--request"]
+effect = "unknown"
+reason = "Depends on HTTP method"
+
+[flags.values]
+GET = "read"
+HEAD = "read"
+POST = "write"
+PUT = "write"
+DELETE = "write"
+PATCH = "write"
+
+[[flags]]
+flag = ["-d", "--data", "--data-raw", "--data-binary"]
+effect = "write"
+reason = "Sends data (implies POST)"
+
+[[flags]]
+flag = ["-o", "--output"]
+effect = "write"
+reason = "Writes response to file"

@@ -1,0 +1,27 @@
+[[tests]]
+input = "ls && pwd"
+expect = "read"
+
+[[tests]]
+input = "ls && rm file"
+expect = "write"
+
+[[tests]]
+input = "ls || rm file"
+expect = "write"
+
+[[tests]]
+input = "ls ; rm file"
+expect = "write"
+
+[[tests]]
+input = "git status && git log --oneline"
+expect = "read"
+
+[[tests]]
+input = "git add . && git commit -m 'test'"
+expect = "write"
+
+[[tests]]
+input = "mkdir -p dir && cp file dir/"
+expect = "write"

@@ -1,0 +1,2 @@
+command = "uname"
+default = "read"

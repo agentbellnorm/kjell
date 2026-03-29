@@ -1,0 +1,110 @@
+command = "git"
+default = "unknown"
+
+[subcommands.log]
+default = "read"
+
+[subcommands.diff]
+default = "read"
+
+[subcommands.status]
+default = "read"
+
+[subcommands.show]
+default = "read"
+
+[subcommands.branch]
+default = "read"
+
+[subcommands.tag]
+default = "read"
+
+[subcommands.remote]
+default = "read"
+
+[subcommands.stash]
+default = "write"
+
+[subcommands.commit]
+default = "write"
+
+[subcommands.push]
+default = "write"
+
+[subcommands.pull]
+default = "write"
+
+[subcommands.checkout]
+default = "write"
+
+[subcommands.merge]
+default = "write"
+
+[subcommands.rebase]
+default = "write"
+
+[subcommands.reset]
+default = "write"
+
+[subcommands.add]
+default = "write"
+
+[subcommands.rm]
+default = "write"
+
+[subcommands.mv]
+default = "write"
+
+[subcommands.init]
+default = "write"
+
+[subcommands.clone]
+default = "write"
+
+[subcommands.fetch]
+default = "read"
+
+[subcommands.blame]
+default = "read"
+
+[subcommands.shortlog]
+default = "read"
+
+[subcommands.describe]
+default = "read"
+
+[subcommands.rev-parse]
+default = "read"
+
+[subcommands.ls-files]
+default = "read"
+
+[subcommands.ls-tree]
+default = "read"
+
+[subcommands.cat-file]
+default = "read"
+
+[subcommands.merge-base]
+default = "read"
+
+[subcommands.config]
+default = "read"
+
+[subcommands.switch]
+default = "write"
+
+[subcommands.restore]
+default = "write"
+
+[subcommands.cherry-pick]
+default = "write"
+
+[subcommands.revert]
+default = "write"
+
+[subcommands.clean]
+default = "write"
+
+[subcommands.bisect]
+default = "read"

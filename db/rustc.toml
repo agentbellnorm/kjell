@@ -1,0 +1,2 @@
+command = "rustc"
+default = "read"

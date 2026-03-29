@@ -1,0 +1,2 @@
+command = "tr"
+default = "read"

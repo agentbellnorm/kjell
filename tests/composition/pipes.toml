@@ -1,0 +1,25 @@
+[[tests]]
+input = "cat file.txt | grep error"
+expect = "read"
+
+[[tests]]
+input = "cat file.txt | tee output.log"
+expect = "write"
+note = "tee writes to a file"
+
+[[tests]]
+input = "grep error log.txt | sort | head -20"
+expect = "read"
+
+[[tests]]
+input = "cat file | grep error | sort | uniq -c"
+expect = "read"
+
+[[tests]]
+input = "ls -la | grep '.go'"
+expect = "read"
+
+[[tests]]
+input = "history | grep -v -E 'ls|cd|gs' | less"
+expect = "unknown"
+note = "history is not in database"

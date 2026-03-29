@@ -1,0 +1,12 @@
+[[tests]]
+input = "xargs grep TODO"
+expect = "read"
+
+[[tests]]
+input = "xargs rm"
+expect = "write"
+
+[[tests]]
+input = "xargs"
+expect = "unknown"
+note = "No inner command to classify"

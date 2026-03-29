@@ -1,0 +1,2 @@
+command = "uniq"
+default = "read"

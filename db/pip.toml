@@ -1,0 +1,17 @@
+command = "pip"
+default = "unknown"
+
+[subcommands.list]
+default = "read"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.uninstall]
+default = "write"
+
+[subcommands.show]
+default = "read"
+
+[subcommands.freeze]
+default = "read"

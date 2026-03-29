@@ -1,0 +1,31 @@
+[[tests]]
+input = "docker ps"
+expect = "read"
+
+[[tests]]
+input = "docker images"
+expect = "read"
+
+[[tests]]
+input = "docker logs my-container"
+expect = "read"
+
+[[tests]]
+input = "docker build ."
+expect = "write"
+
+[[tests]]
+input = "docker pull nginx"
+expect = "write"
+
+[[tests]]
+input = "docker push myimage"
+expect = "write"
+
+[[tests]]
+input = "docker rm my-container"
+expect = "write"
+
+[[tests]]
+input = "docker stop my-container"
+expect = "write"

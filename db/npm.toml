@@ -1,0 +1,29 @@
+command = "npm"
+default = "unknown"
+
+[subcommands.list]
+default = "read"
+
+[subcommands.ls]
+default = "read"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.publish]
+default = "write"
+
+[subcommands.run]
+default = "unknown"
+
+[subcommands.test]
+default = "read"
+
+[subcommands.version]
+default = "read"
+
+[subcommands.init]
+default = "write"
+
+[subcommands.uninstall]
+default = "write"

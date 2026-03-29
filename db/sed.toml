@@ -1,0 +1,7 @@
+command = "sed"
+default = "read"
+
+[[flags]]
+flag = ["-i", "--in-place"]
+effect = "write"
+reason = "Edits files in place"

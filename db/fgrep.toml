@@ -1,0 +1,2 @@
+command = "fgrep"
+default = "read"

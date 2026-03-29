@@ -1,0 +1,17 @@
+command = "tar"
+default = "unknown"
+
+[[flags]]
+flag = ["-c", "--create"]
+effect = "write"
+reason = "Creates archive"
+
+[[flags]]
+flag = ["-x", "--extract"]
+effect = "write"
+reason = "Extracts files"
+
+[[flags]]
+flag = ["-t", "--list"]
+effect = "read"
+reason = "Lists archive contents"

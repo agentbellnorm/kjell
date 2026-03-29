@@ -1,0 +1,2 @@
+command = "whereis"
+default = "read"

@@ -1,0 +1,23 @@
+[[tests]]
+input = "find . -name '*.go'"
+expect = "read"
+
+[[tests]]
+input = "find . -type f -name '*.log'"
+expect = "read"
+
+[[tests]]
+input = "find . -name '*.tmp' -delete"
+expect = "write"
+
+[[tests]]
+input = "find . -exec cat {} \\;"
+expect = "read"
+
+[[tests]]
+input = "find . -exec rm {} \\;"
+expect = "write"
+
+[[tests]]
+input = "find . -exec rm {} +"
+expect = "write"

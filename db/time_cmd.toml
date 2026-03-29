@@ -1,0 +1,4 @@
+command = "time"
+default = "read"
+recursive = true
+inner_command_position = 1

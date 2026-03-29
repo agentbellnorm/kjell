@@ -1,0 +1,2 @@
+command = "host"
+default = "read"

@@ -1,0 +1,19 @@
+[[tests]]
+input = "npm list"
+expect = "read"
+
+[[tests]]
+input = "npm install"
+expect = "write"
+
+[[tests]]
+input = "npm test"
+expect = "read"
+
+[[tests]]
+input = "npm publish"
+expect = "write"
+
+[[tests]]
+input = "npm version"
+expect = "read"

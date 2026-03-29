@@ -1,0 +1,2 @@
+command = "nano"
+default = "write"

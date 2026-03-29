@@ -1,0 +1,2 @@
+command = "unrar"
+default = "write"

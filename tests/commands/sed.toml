@@ -1,0 +1,20 @@
+[[tests]]
+input = "sed 's/foo/bar/' file.txt"
+expect = "read"
+
+[[tests]]
+input = "sed -i 's/foo/bar/' file.txt"
+expect = "write"
+
+[[tests]]
+input = "sed --in-place 's/foo/bar/' file.txt"
+expect = "write"
+
+[[tests]]
+input = "sed -i.bak 's/foo/bar/' file.txt"
+expect = "write"
+
+[[tests]]
+input = "sed -n 's/foo/bar/p' file.txt"
+expect = "read"
+note = "-n suppresses output, -i not present, still read-only"

@@ -1,0 +1,23 @@
+command = "cargo"
+default = "unknown"
+
+[subcommands.build]
+default = "write"
+
+[subcommands.test]
+default = "read"
+
+[subcommands.run]
+default = "unknown"
+
+[subcommands.check]
+default = "read"
+
+[subcommands.clippy]
+default = "read"
+
+[subcommands.fmt]
+default = "write"
+
+[subcommands.version]
+default = "read"

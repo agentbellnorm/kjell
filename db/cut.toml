@@ -1,0 +1,2 @@
+command = "cut"
+default = "read"

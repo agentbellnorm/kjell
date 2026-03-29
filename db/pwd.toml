@@ -1,0 +1,2 @@
+command = "pwd"
+default = "read"

@@ -1,0 +1,7 @@
+[[tests]]
+input = "cat file.txt"
+expect = "read"
+
+[[tests]]
+input = "cat -n file.txt"
+expect = "read"

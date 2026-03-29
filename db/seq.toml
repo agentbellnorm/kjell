@@ -1,0 +1,2 @@
+command = "seq"
+default = "read"

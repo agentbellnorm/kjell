@@ -1,0 +1,16 @@
+command = "find"
+default = "read"
+
+[[flags]]
+flag = ["-exec", "-execdir"]
+effect = "recursive"
+inner_command_terminators = [";", "+"]
+
+[[flags]]
+flag = ["-ok", "-okdir"]
+effect = "recursive"
+inner_command_terminators = [";"]
+
+[[flags]]
+flag = ["-delete"]
+effect = "write"

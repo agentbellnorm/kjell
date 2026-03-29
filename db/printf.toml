@@ -1,0 +1,2 @@
+command = "printf"
+default = "read"

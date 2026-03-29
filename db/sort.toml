@@ -1,0 +1,2 @@
+command = "sort"
+default = "read"

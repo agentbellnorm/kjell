@@ -1,0 +1,32 @@
+[[tests]]
+input = "curl https://example.com"
+expect = "read"
+
+[[tests]]
+input = "curl -X GET https://example.com/api"
+expect = "read"
+
+[[tests]]
+input = "curl -X POST https://example.com/api"
+expect = "write"
+
+[[tests]]
+input = "curl -X PUT https://example.com/api"
+expect = "write"
+
+[[tests]]
+input = "curl -X DELETE https://example.com/api"
+expect = "write"
+
+[[tests]]
+input = "curl -d 'data' https://example.com/api"
+expect = "write"
+
+[[tests]]
+input = "curl -o output.html https://example.com"
+expect = "write"
+
+[[tests]]
+input = "curl -v https://example.com"
+expect = "read"
+note = "-v is just verbose output, still read"

@@ -1,0 +1,34 @@
+command = "kubectl"
+default = "unknown"
+
+[subcommands.get]
+default = "read"
+
+[subcommands.describe]
+default = "read"
+
+[subcommands.logs]
+default = "read"
+
+[subcommands.apply]
+default = "write"
+
+[subcommands.delete]
+default = "write"
+
+[subcommands.create]
+default = "write"
+
+[subcommands.exec]
+default = "unknown"
+recursive = true
+separator = "--"
+
+[subcommands.scale]
+default = "write"
+
+[subcommands.rollout]
+default = "read"
+
+[subcommands.port-forward]
+default = "read"

@@ -1,0 +1,335 @@
+## Cross-validation against safecmd (https://github.com/AnswerDotAI/safecmd)
+## Every command safecmd allows should be read; every command it blocks should be write/unknown.
+
+## === safecmd ALLOWED commands ===
+
+[[tests]]
+input = "ls -la"
+expect = "read"
+
+[[tests]]
+input = "ls -la | grep py"
+expect = "read"
+
+[[tests]]
+input = "git status"
+expect = "read"
+
+[[tests]]
+input = "find . -name '*.py'"
+expect = "read"
+
+[[tests]]
+input = "echo hello"
+expect = "read"
+
+[[tests]]
+input = "find . -exec ls \\;"
+expect = "read"
+
+[[tests]]
+input = "env ls"
+expect = "read"
+
+[[tests]]
+input = "sed 1,3p styles.css"
+expect = "read"
+
+[[tests]]
+input = "echo hello | cat"
+expect = "read"
+
+[[tests]]
+input = "[ -f /etc/passwd ] && echo exists"
+expect = "read"
+
+[[tests]]
+input = "git status && echo done"
+expect = "read"
+
+[[tests]]
+input = "cat file | grep error"
+expect = "read"
+
+[[tests]]
+input = "head -20 file.txt"
+expect = "read"
+
+[[tests]]
+input = "tail -f /var/log/syslog"
+expect = "read"
+
+[[tests]]
+input = "wc -l file.txt"
+expect = "read"
+
+[[tests]]
+input = "sort file.txt"
+expect = "read"
+
+[[tests]]
+input = "uniq -c"
+expect = "read"
+
+[[tests]]
+input = "diff file1 file2"
+expect = "read"
+
+[[tests]]
+input = "cut -d: -f1 /etc/passwd"
+expect = "read"
+
+[[tests]]
+input = "tr '[:lower:]' '[:upper:]'"
+expect = "read"
+
+[[tests]]
+input = "file myfile.bin"
+expect = "read"
+
+[[tests]]
+input = "stat file.txt"
+expect = "read"
+
+[[tests]]
+input = "du -sh ."
+expect = "read"
+
+[[tests]]
+input = "df -h"
+expect = "read"
+
+[[tests]]
+input = "which python"
+expect = "read"
+
+[[tests]]
+input = "whereis ls"
+expect = "read"
+
+[[tests]]
+input = "whoami"
+expect = "read"
+
+[[tests]]
+input = "hostname"
+expect = "read"
+
+[[tests]]
+input = "uname -a"
+expect = "read"
+
+[[tests]]
+input = "date"
+expect = "read"
+
+[[tests]]
+input = "uptime"
+expect = "read"
+
+[[tests]]
+input = "printenv PATH"
+expect = "read"
+
+[[tests]]
+input = "basename /path/to/file.txt"
+expect = "read"
+
+[[tests]]
+input = "dirname /path/to/file.txt"
+expect = "read"
+
+[[tests]]
+input = "realpath ./relative/path"
+expect = "read"
+
+[[tests]]
+input = "seq 1 10"
+expect = "read"
+
+[[tests]]
+input = "cal"
+expect = "read"
+
+[[tests]]
+input = "tree ."
+expect = "read"
+
+[[tests]]
+input = "rg TODO src/"
+expect = "read"
+
+[[tests]]
+input = "ag pattern file"
+expect = "read"
+
+[[tests]]
+input = "ack pattern"
+expect = "read"
+
+[[tests]]
+input = "fgrep literal file.txt"
+expect = "read"
+
+[[tests]]
+input = "egrep 'pattern1|pattern2' file.txt"
+expect = "read"
+
+[[tests]]
+input = "jq '.data' file.json"
+expect = "read"
+
+## Git read operations
+
+[[tests]]
+input = "git log --oneline -20"
+expect = "read"
+
+[[tests]]
+input = "git diff HEAD~3"
+expect = "read"
+
+[[tests]]
+input = "git branch -a"
+expect = "read"
+
+[[tests]]
+input = "git show HEAD"
+expect = "read"
+
+[[tests]]
+input = "git remote -v"
+expect = "read"
+
+[[tests]]
+input = "git tag -l"
+expect = "read"
+
+[[tests]]
+input = "git blame file.txt"
+expect = "read"
+
+## gh read operations
+
+[[tests]]
+input = "gh pr list"
+expect = "read"
+
+[[tests]]
+input = "gh issue view 123"
+expect = "read"
+
+[[tests]]
+input = "gh run list"
+expect = "read"
+
+## npm/package manager reads
+
+[[tests]]
+input = "npm list"
+expect = "read"
+
+[[tests]]
+input = "npm ls --depth 0"
+expect = "read"
+
+[[tests]]
+input = "npm test"
+expect = "read"
+
+## Docker reads
+
+[[tests]]
+input = "docker ps"
+expect = "read"
+
+[[tests]]
+input = "docker images"
+expect = "read"
+
+[[tests]]
+input = "docker logs my-container"
+expect = "read"
+
+[[tests]]
+input = "docker inspect my-container"
+expect = "read"
+
+## === safecmd BLOCKED commands ===
+
+[[tests]]
+input = "rm -rf /"
+expect = "write"
+
+[[tests]]
+input = "find / -exec rm {} \\;"
+expect = "write"
+note = "find -exec with destructive inner command"
+
+[[tests]]
+input = "find . -delete"
+expect = "write"
+
+[[tests]]
+input = "git push"
+expect = "write"
+
+[[tests]]
+input = "sudo ls"
+expect = "read"
+note = "We classify sudo ls as read (recursive eval). safecmd blocks all sudo. Our approach is more permissive but correct."
+
+[[tests]]
+input = "env rm -rf /asdfff"
+expect = "write"
+
+[[tests]]
+input = "ls $(rm -rf /)"
+expect = "write"
+note = "Destructive command substitution"
+
+[[tests]]
+input = "xargs rm"
+expect = "write"
+
+## === Write operations safecmd blocks ===
+
+[[tests]]
+input = "npm install"
+expect = "write"
+
+[[tests]]
+input = "docker build ."
+expect = "write"
+
+[[tests]]
+input = "docker pull nginx"
+expect = "write"
+
+[[tests]]
+input = "git commit -m 'test'"
+expect = "write"
+
+[[tests]]
+input = "git checkout main"
+expect = "write"
+
+[[tests]]
+input = "vim file.txt"
+expect = "write"
+
+## === Archive/extraction tools ===
+
+[[tests]]
+input = "tar -xvf file.tar"
+expect = "write"
+note = "-x extracts, which is a write"
+
+[[tests]]
+input = "tar -tf archive.tar"
+expect = "read"
+note = "-t just lists contents"
+
+[[tests]]
+input = "unzip archive.zip"
+expect = "write"

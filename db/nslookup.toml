@@ -1,0 +1,2 @@
+command = "nslookup"
+default = "read"

@@ -1,0 +1,11 @@
+[[tests]]
+input = "sh -c 'grep foo bar'"
+expect = "read"
+
+[[tests]]
+input = "sh -c 'rm -rf /'"
+expect = "write"
+
+[[tests]]
+input = "sh -c 'ls -la'"
+expect = "read"

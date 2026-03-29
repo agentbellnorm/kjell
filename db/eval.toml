@@ -1,0 +1,3 @@
+command = "eval"
+default = "unknown"
+reason = "Executes dynamically constructed command — cannot classify statically"

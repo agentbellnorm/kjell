@@ -1,0 +1,2 @@
+command = "ping"
+default = "read"

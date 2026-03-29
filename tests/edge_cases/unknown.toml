@@ -1,0 +1,11 @@
+[[tests]]
+input = "some-tool --flag"
+expect = "unknown"
+
+[[tests]]
+input = "my-custom-script"
+expect = "unknown"
+
+[[tests]]
+input = "deploy-prod --env staging"
+expect = "unknown"
