@@ -124,7 +124,7 @@ func TestClaudeCodeFormatAllow(t *testing.T) {
 	}
 }
 
-func TestClaudeCodeFormatAsk(t *testing.T) {
+func TestClaudeCodeFormatWritePassthrough(t *testing.T) {
 	result := &classifier.ClassifyResult{
 		Input:          "rm file",
 		Classification: database.Write,
@@ -138,17 +138,12 @@ func TestClaudeCodeFormatAsk(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed ClaudeCodeOutput
-	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
-		t.Fatalf("invalid JSON: %v", err)
-	}
-
-	if parsed.HookSpecificOutput.PermissionDecision != "ask" {
-		t.Errorf("expected 'ask', got %q", parsed.HookSpecificOutput.PermissionDecision)
+	if output != "" {
+		t.Errorf("expected empty output for write (passthrough), got %q", output)
 	}
 }
 
-func TestClaudeCodeFormatUnknown(t *testing.T) {
+func TestClaudeCodeFormatUnknownPassthrough(t *testing.T) {
 	result := &classifier.ClassifyResult{
 		Input:          "mystery-cmd",
 		Classification: database.Unknown,
@@ -162,12 +157,7 @@ func TestClaudeCodeFormatUnknown(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed ClaudeCodeOutput
-	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
-		t.Fatalf("invalid JSON: %v", err)
-	}
-
-	if parsed.HookSpecificOutput.PermissionDecision != "ask" {
-		t.Errorf("expected 'ask' for unknown, got %q", parsed.HookSpecificOutput.PermissionDecision)
+	if output != "" {
+		t.Errorf("expected empty output for unknown (passthrough), got %q", output)
 	}
 }

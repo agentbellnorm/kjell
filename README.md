@@ -37,7 +37,7 @@ Add to `.claude/settings.local.json`:
 }
 ```
 
-Read-only commands auto-approve. Everything else prompts as usual.
+Read-only commands auto-approve. Writes and unknowns pass through to Claude Code's normal permission system — your "always allow" rules still work.
 
 ## Install
 

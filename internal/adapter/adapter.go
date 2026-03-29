@@ -109,19 +109,20 @@ func ClaudeCodeExtract(r io.Reader) (string, error) {
 }
 
 // ClaudeCodeFormat formats a ClassifyResult as Claude Code hook output JSON.
+// For read commands, it returns "allow" to auto-approve.
+// For write/unknown, it returns empty output so Claude Code's normal
+// permission system handles it (including user's "always allow" rules).
 func ClaudeCodeFormat(result *classifier.ClassifyResult) (string, error) {
-	decision := "ask"
-	if result.Classification == database.Read {
-		decision = "allow"
+	if result.Classification != database.Read {
+		// No output — let Claude Code's permission system decide.
+		return "", nil
 	}
-
-	reason := formatDecisionReason(result)
 
 	output := ClaudeCodeOutput{
 		HookSpecificOutput: ClaudeCodeHookOutput{
 			HookEventName:            "PreToolUse",
-			PermissionDecision:       decision,
-			PermissionDecisionReason: reason,
+			PermissionDecision:       "allow",
+			PermissionDecisionReason: "kjell: read-only",
 		},
 	}
 

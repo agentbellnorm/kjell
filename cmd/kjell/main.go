@@ -96,7 +96,9 @@ func runCheck(c *classifier.Classifier, args []string) {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Println(output)
+		if output != "" {
+			fmt.Println(output)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown format: %s\n", format)
 		os.Exit(1)
