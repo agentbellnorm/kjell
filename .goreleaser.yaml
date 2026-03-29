@@ -1,0 +1,26 @@
+version: 2
+
+builds:
+  - main: ./cmd/kjell
+    binary: kjell
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: ['tar.gz']
+
+brews:
+  - repository:
+      owner: agentbellnorm
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/agentbellnorm/kjell
+    description: Shell command classifier for AI coding agents
+    install: |
+      bin.install "kjell"
