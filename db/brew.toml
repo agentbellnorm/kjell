@@ -1,0 +1,32 @@
+command = "brew"
+default = "unknown"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.uninstall]
+default = "write"
+
+[subcommands.upgrade]
+default = "write"
+
+[subcommands.update]
+default = "write"
+
+[subcommands.list]
+default = "read"
+
+[subcommands.info]
+default = "read"
+
+[subcommands.search]
+default = "read"
+
+[subcommands.config]
+default = "read"
+
+[subcommands.doctor]
+default = "read"
+
+[subcommands.outdated]
+default = "read"

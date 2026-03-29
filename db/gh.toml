@@ -32,4 +32,16 @@ default = "read"
 default = "read"
 
 [subcommands.api]
-default = "unknown"
+default = "read"
+
+[[subcommands.api.flags]]
+flag = ["-X", "--method"]
+effect = "unknown"
+reason = "Depends on HTTP method"
+
+[subcommands.api.flags.values]
+GET = "read"
+POST = "write"
+PUT = "write"
+DELETE = "write"
+PATCH = "write"
