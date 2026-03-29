@@ -77,3 +77,18 @@ expect = "write"
 [[tests]]
 input = "git clone https://github.com/foo/bar.git"
 expect = "write"
+
+[[tests]]
+input = "git -C /some/path log --oneline -5"
+expect = "read"
+note = "Flag -C takes an argument; subcommand is log, not the path"
+
+[[tests]]
+input = "git -C /some/path status"
+expect = "read"
+note = "Flag -C with path value should not prevent subcommand detection"
+
+[[tests]]
+input = "git -C /some/path commit -m 'test'"
+expect = "write"
+note = "Flag -C with path value, subcommand commit is write"

@@ -98,6 +98,7 @@ func LoadFromFS(fsys fs.FS) (*Database, error) {
 			return nil, err
 		}
 
+		normalizeCommandDef(&def)
 		db.commands[def.Command] = def
 	}
 
@@ -149,6 +150,17 @@ func validateCommandDef(filename string, def *CommandDef) error {
 	}
 
 	return nil
+}
+
+func normalizeCommandDef(def *CommandDef) {
+	// Normalize InnerCommandPosition to int for consistent type switching.
+	// TOML decodes integers as int64; normalize to int.
+	switch v := def.InnerCommandPosition.(type) {
+	case int64:
+		def.InnerCommandPosition = int(v)
+	case float64:
+		def.InnerCommandPosition = int(v)
+	}
 }
 
 func validateClassification(filename, context, value string) error {
