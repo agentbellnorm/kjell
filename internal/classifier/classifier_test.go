@@ -384,3 +384,34 @@ func TestOrOperator(t *testing.T) {
 func TestSemicolon(t *testing.T) {
 	assertClassification(t, "ls ; rm file", database.Write)
 }
+
+func TestCommandLevelFlagDoesNotDowngradeSubcommand(t *testing.T) {
+	// A command-level flag classified as "read" must not downgrade
+	// a subcommand that is classified as "write".
+	fs := fstest.MapFS{
+		"tool.toml": {Data: []byte(`command = "tool"
+default = "unknown"
+
+[subcommands.deploy]
+default = "write"
+
+[[flags]]
+flag = ["--verbose", "-v"]
+effect = "read"
+reason = "Verbose output only"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+	result, err := c.Classify("tool deploy --verbose")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Write {
+		t.Errorf("tool deploy --verbose = %s, want write (command-level flag should not downgrade subcommand)",
+			result.Classification)
+	}
+}

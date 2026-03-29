@@ -36,48 +36,7 @@ func New(db *database.Database) *Classifier {
 
 // Classify parses and classifies a shell command string.
 func (c *Classifier) Classify(input string) (*ClassifyResult, error) {
-	expr, err := parser.Parse(input)
-	if err != nil {
-		return nil, fmt.Errorf("parsing: %w", err)
-	}
-
-	result := &ClassifyResult{
-		Input:          input,
-		Classification: database.Read, // start optimistic
-	}
-
-	// Classify all pipelines
-	for _, pipeline := range expr.Pipelines {
-		pipeClass := c.classifyPipeline(pipeline, result, 0)
-		result.Classification = worst(result.Classification, pipeClass)
-	}
-
-	// Classify command substitutions
-	for _, sub := range expr.Subshells {
-		subResult, err := c.Classify(sub)
-		if err == nil {
-			result.Classification = worst(result.Classification, subResult.Classification)
-			result.Components = append(result.Components, ComponentResult{
-				Command:        sub,
-				Classification: subResult.Classification,
-				Reason:         fmt.Sprintf("command substitution: %s", sub),
-			})
-		}
-	}
-
-	// Any output redirect makes it a write
-	for _, redir := range expr.Redirects {
-		if isWriteRedirect(redir) {
-			result.Classification = database.Write
-			result.Components = append(result.Components, ComponentResult{
-				Command:        redir.Type + " " + redir.Target,
-				Classification: database.Write,
-				Reason:         fmt.Sprintf("redirect %s writes to %s", redir.Type, redir.Target),
-			})
-		}
-	}
-
-	return result, nil
+	return c.classifyAtDepth(input, 0)
 }
 
 func (c *Classifier) classifyPipeline(pipeline parser.ParsedPipeline, result *ClassifyResult, depth int) database.Classification {
@@ -120,10 +79,12 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 	// Check for subcommand
 	cmdClass := def.Default
 	reason := fmt.Sprintf("%s: default %s", cmd.Command, def.Default)
+	subcommandMatched := false
 
 	if len(def.Subcommands) > 0 && len(cmd.Args) > 0 {
 		subName := findSubcommand(cmd.Args, def)
 		if subDef, ok := def.Subcommands[subName]; ok {
+			subcommandMatched = true
 			cmdClass = subDef.Default
 			reason = fmt.Sprintf("%s %s: %s", cmd.Command, subName, subDef.Default)
 
@@ -154,12 +115,18 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 	}
 
 	// Check flags against the command-level flags.
-	// When a flag explicitly sets a classification, it replaces the default
+	// When no subcommand matched, flags replace the default
 	// (e.g., tar is unknown by default, but -t makes it read).
+	// When a subcommand was matched, flags compose with worst-of
+	// to avoid downgrading a write subcommand.
 	if len(def.Flags) > 0 {
 		flagClass, flagReason := c.checkFlags(cmd, def.Flags, result, depth)
 		if flagClass != "" {
-			cmdClass = flagClass
+			if subcommandMatched {
+				cmdClass = worst(cmdClass, flagClass)
+			} else {
+				cmdClass = flagClass
+			}
 			reason = flagReason
 		}
 	}
@@ -261,7 +228,7 @@ func (c *Classifier) resolveRecursive(def *database.CommandDef, cmd parser.Parse
 
 	// Reconstruct inner command string
 	innerCmd := strings.Join(innerArgs, " ")
-	innerResult, err := c.classifyString(innerCmd, depth+1)
+	innerResult, err := c.classifyAtDepth(innerCmd, depth+1)
 	if err != nil {
 		return ""
 	}
@@ -281,7 +248,7 @@ func (c *Classifier) resolveRecursiveFlag(flagDef database.FlagDef, cmd parser.P
 		for i, arg := range cmd.Args {
 			if arg == matchedFlag && i+1 < len(cmd.Args) {
 				innerStr := cmd.Args[i+1]
-				innerResult, err := c.classifyString(innerStr, depth+1)
+				innerResult, err := c.classifyAtDepth(innerStr, depth+1)
 				if err != nil {
 					return ""
 				}
@@ -293,7 +260,7 @@ func (c *Classifier) resolveRecursiveFlag(flagDef database.FlagDef, cmd parser.P
 		for i, arg := range cmd.Args {
 			if arg == matchedFlag && i+1 < len(cmd.Args) {
 				innerStr := strings.Join(cmd.Args[i+1:], " ")
-				innerResult, err := c.classifyString(innerStr, depth+1)
+				innerResult, err := c.classifyAtDepth(innerStr, depth+1)
 				if err != nil {
 					return ""
 				}
@@ -313,7 +280,7 @@ func (c *Classifier) resolveRecursiveFlag(flagDef database.FlagDef, cmd parser.P
 			}
 			if len(cleanArgs) > 0 {
 				innerCmd := strings.Join(cleanArgs, " ")
-				innerResult, err := c.classifyString(innerCmd, depth+1)
+				innerResult, err := c.classifyAtDepth(innerCmd, depth+1)
 				if err != nil {
 					return ""
 				}
@@ -358,10 +325,8 @@ func extractInnerCommand(def *database.CommandDef, cmd parser.ParsedCommand) []s
 	}
 
 	switch pos := def.InnerCommandPosition.(type) {
-	case float64:
-		return findInnerByPosition(cmd.Args, int(pos))
-	case int64:
-		return findInnerByPosition(cmd.Args, int(pos))
+	case int:
+		return findInnerByPosition(cmd.Args, pos)
 	case string:
 		if pos == "after_vars" {
 			for i, arg := range cmd.Args {
@@ -418,7 +383,7 @@ func looksLikeFlagValue(s string) bool {
 	return true
 }
 
-func (c *Classifier) classifyString(input string, depth int) (*ClassifyResult, error) {
+func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, error) {
 	if depth > maxRecursionDepth {
 		return &ClassifyResult{
 			Input:          input,
@@ -428,6 +393,9 @@ func (c *Classifier) classifyString(input string, depth int) (*ClassifyResult, e
 
 	expr, err := parser.Parse(input)
 	if err != nil {
+		if depth == 0 {
+			return nil, fmt.Errorf("parsing: %w", err)
+		}
 		return nil, err
 	}
 
@@ -442,15 +410,25 @@ func (c *Classifier) classifyString(input string, depth int) (*ClassifyResult, e
 	}
 
 	for _, sub := range expr.Subshells {
-		subResult, err := c.classifyString(sub, depth+1)
+		subResult, err := c.classifyAtDepth(sub, depth+1)
 		if err == nil {
 			result.Classification = worst(result.Classification, subResult.Classification)
+			result.Components = append(result.Components, ComponentResult{
+				Command:        sub,
+				Classification: subResult.Classification,
+				Reason:         fmt.Sprintf("command substitution: %s", sub),
+			})
 		}
 	}
 
 	for _, redir := range expr.Redirects {
 		if isWriteRedirect(redir) {
 			result.Classification = database.Write
+			result.Components = append(result.Components, ComponentResult{
+				Command:        redir.Type + " " + redir.Target,
+				Classification: database.Write,
+				Reason:         fmt.Sprintf("redirect %s writes to %s", redir.Type, redir.Target),
+			})
 		}
 	}
 
@@ -470,6 +448,7 @@ func argsAfterSubcommand(args []string, subName string) []string {
 }
 
 func findSubcommand(args []string, def *database.CommandDef) string {
+	var firstNonFlag string
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "-") {
 			continue
@@ -478,10 +457,12 @@ func findSubcommand(args []string, def *database.CommandDef) string {
 		if _, ok := def.Subcommands[arg]; ok {
 			return arg
 		}
-		// First non-flag arg that's not a known subcommand — stop looking
-		return arg
+		// Remember first non-flag arg in case no known subcommand is found
+		if firstNonFlag == "" {
+			firstNonFlag = arg
+		}
 	}
-	return ""
+	return firstNonFlag
 }
 
 func isWriteRedirect(r parser.Redirect) bool {
@@ -490,6 +471,12 @@ func isWriteRedirect(r parser.Redirect) bool {
 		return true
 	}
 	return false
+}
+
+var classificationRank = map[database.Classification]int{
+	database.Read:    0,
+	database.Unknown: 1,
+	database.Write:   2,
 }
 
 // worst returns the more dangerous classification.
@@ -501,12 +488,7 @@ func worst(a, b database.Classification) database.Classification {
 	if b == "" {
 		return a
 	}
-	rank := map[database.Classification]int{
-		database.Read:    0,
-		database.Unknown: 1,
-		database.Write:   2,
-	}
-	if rank[b] > rank[a] {
+	if classificationRank[b] > classificationRank[a] {
 		return b
 	}
 	return a

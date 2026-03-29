@@ -89,7 +89,7 @@ default = "read"
 default = "read"
 
 [subcommands.config]
-default = "read"
+default = "write"
 
 [subcommands.switch]
 default = "write"

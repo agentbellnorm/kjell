@@ -323,7 +323,7 @@ func extractRedirect(redir *syntax.Redirect) Redirect {
 	case syntax.RdrAll:
 		r.Type = "&>"
 	default:
-		r.Type = ">"
+		r.Type = fmt.Sprintf("redirect_op_%d", redir.Op)
 	}
 
 	if redir.N != nil && redir.N.Value == "2" {
