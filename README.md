@@ -42,15 +42,16 @@ Read-only commands auto-approve. Everything else prompts as usual.
 ## Install
 
 ```bash
+brew install agentbellnorm/tap/kjell
+```
+
+Or with Go:
+
+```bash
 go install github.com/agentbellnorm/kjell/cmd/kjell@latest
 ```
 
-Or build from source:
-
-```bash
-git clone https://github.com/agentbellnorm/kjell.git && cd kjell
-go build -o kjell ./cmd/kjell/
-```
+Or grab a binary from [GitHub Releases](https://github.com/agentbellnorm/kjell/releases).
 
 ## CLI
 
