@@ -1,2 +1,2 @@
 command = "file"
-default = "read"
+default = "safe"

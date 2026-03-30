@@ -1,2 +1,2 @@
 command = "ping"
-default = "read"
+default = "safe"

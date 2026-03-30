@@ -1,2 +1,2 @@
 command = "nslookup"
-default = "read"
+default = "safe"

@@ -1,14 +1,14 @@
 [[tests]]
 input = "kubectl get pods"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "kubectl describe pod my-pod"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "kubectl logs my-pod"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "kubectl apply -f deployment.yaml"
@@ -20,7 +20,7 @@ expect = "write"
 
 [[tests]]
 input = "kubectl exec pod -- ls"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "kubectl exec pod -- rm -rf /"

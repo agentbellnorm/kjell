@@ -2,25 +2,25 @@ command = "git"
 default = "unknown"
 
 [subcommands.log]
-default = "read"
+default = "safe"
 
 [subcommands.diff]
-default = "read"
+default = "safe"
 
 [subcommands.status]
-default = "read"
+default = "safe"
 
 [subcommands.show]
-default = "read"
+default = "safe"
 
 [subcommands.branch]
-default = "read"
+default = "safe"
 
 [subcommands.tag]
-default = "read"
+default = "safe"
 
 [subcommands.remote]
-default = "read"
+default = "safe"
 
 [subcommands.stash]
 default = "write"
@@ -62,31 +62,31 @@ default = "write"
 default = "write"
 
 [subcommands.fetch]
-default = "read"
+default = "safe"
 
 [subcommands.blame]
-default = "read"
+default = "safe"
 
 [subcommands.shortlog]
-default = "read"
+default = "safe"
 
 [subcommands.describe]
-default = "read"
+default = "safe"
 
 [subcommands.rev-parse]
-default = "read"
+default = "safe"
 
 [subcommands.ls-files]
-default = "read"
+default = "safe"
 
 [subcommands.ls-tree]
-default = "read"
+default = "safe"
 
 [subcommands.cat-file]
-default = "read"
+default = "safe"
 
 [subcommands.merge-base]
-default = "read"
+default = "safe"
 
 [subcommands.config]
 default = "write"
@@ -107,4 +107,4 @@ default = "write"
 default = "write"
 
 [subcommands.bisect]
-default = "read"
+default = "safe"

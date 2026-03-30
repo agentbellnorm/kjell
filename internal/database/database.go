@@ -10,11 +10,11 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// Classification represents the read/write/unknown classification of a command.
+// Classification represents the safe/write/unknown classification of a command.
 type Classification string
 
 const (
-	Read    Classification = "read"
+	Safe    Classification = "safe"
 	Write   Classification = "write"
 	Unknown Classification = "unknown"
 )
@@ -22,11 +22,11 @@ const (
 // FlagDef describes how a specific flag affects classification.
 type FlagDef struct {
 	Flag                   []string          `toml:"flag"`
-	Effect                 string            `toml:"effect"` // "read", "write", "unknown", "recursive"
+	Effect                 string            `toml:"effect"` // "safe", "write", "unknown", "recursive"
 	Reason                 string            `toml:"reason"`
 	InnerCommandTerminator []string          `toml:"inner_command_terminators"`
 	InnerCommandSource     string            `toml:"inner_command_source"` // "next_arg_as_shell", "trailing_args_as_shell"
-	Values                 map[string]string `toml:"values"`              // value-dependent: e.g. {GET: "read", POST: "write"}
+	Values                 map[string]string `toml:"values"`              // value-dependent: e.g. {GET: "safe", POST: "write"}
 }
 
 // CommandDef defines the classification rules for a command.
@@ -134,7 +134,7 @@ func validateCommandDef(filename string, def *CommandDef) error {
 		if len(flag.Flag) == 0 {
 			return fmt.Errorf("%s: command %q flag[%d] has no flag names", filename, def.Command, i)
 		}
-		validEffects := map[string]bool{"read": true, "write": true, "unknown": true, "recursive": true}
+		validEffects := map[string]bool{"safe": true, "write": true, "unknown": true, "recursive": true}
 		if !validEffects[flag.Effect] {
 			return fmt.Errorf("%s: command %q flag %v has invalid effect %q", filename, def.Command, flag.Flag, flag.Effect)
 		}
@@ -165,7 +165,7 @@ func normalizeCommandDef(def *CommandDef) {
 
 func validateClassification(filename, context, value string) error {
 	switch Classification(value) {
-	case Read, Write, Unknown:
+	case Safe, Write, Unknown:
 		return nil
 	default:
 		return fmt.Errorf("%s: %s has invalid classification %q (must be read/write/unknown)", filename, context, value)

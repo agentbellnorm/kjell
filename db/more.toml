@@ -1,2 +1,2 @@
 command = "more"
-default = "read"
+default = "safe"

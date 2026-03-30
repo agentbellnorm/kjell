@@ -1,2 +1,2 @@
 command = "uptime"
-default = "read"
+default = "safe"

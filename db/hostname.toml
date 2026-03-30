@@ -1,2 +1,2 @@
 command = "hostname"
-default = "read"
+default = "safe"

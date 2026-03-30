@@ -2,22 +2,22 @@ command = "cargo"
 default = "unknown"
 
 [subcommands.build]
-default = "write"
+default = "safe"
 
 [subcommands.test]
-default = "read"
+default = "safe"
 
 [subcommands.run]
 default = "unknown"
 
 [subcommands.check]
-default = "read"
+default = "safe"
 
 [subcommands.clippy]
-default = "read"
+default = "safe"
 
 [subcommands.fmt]
 default = "write"
 
 [subcommands.version]
-default = "read"
+default = "safe"

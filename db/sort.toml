@@ -1,2 +1,2 @@
 command = "sort"
-default = "read"
+default = "safe"

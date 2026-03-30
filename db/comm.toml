@@ -1,2 +1,2 @@
 command = "comm"
-default = "read"
+default = "safe"

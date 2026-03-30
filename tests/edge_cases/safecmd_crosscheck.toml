@@ -5,255 +5,255 @@
 
 [[tests]]
 input = "ls -la"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "ls -la | grep py"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git status"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "find . -name '*.py'"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "echo hello"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "find . -exec ls \\;"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "env ls"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "sed 1,3p styles.css"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "echo hello | cat"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "[ -f /etc/passwd ] && echo exists"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git status && echo done"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "cat file | grep error"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "head -20 file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "tail -f /var/log/syslog"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "wc -l file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "sort file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "uniq -c"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "diff file1 file2"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "cut -d: -f1 /etc/passwd"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "tr '[:lower:]' '[:upper:]'"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "file myfile.bin"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "stat file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "du -sh ."
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "df -h"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "which python"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "whereis ls"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "whoami"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "hostname"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "uname -a"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "date"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "uptime"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "printenv PATH"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "basename /path/to/file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "dirname /path/to/file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "realpath ./relative/path"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "seq 1 10"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "cal"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "tree ."
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "rg TODO src/"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "ag pattern file"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "ack pattern"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "fgrep literal file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "egrep 'pattern1|pattern2' file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "jq '.data' file.json"
-expect = "read"
+expect = "safe"
 
 ## Git read operations
 
 [[tests]]
 input = "git log --oneline -20"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git diff HEAD~3"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git branch -a"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git show HEAD"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git remote -v"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git tag -l"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git blame file.txt"
-expect = "read"
+expect = "safe"
 
 ## gh read operations
 
 [[tests]]
 input = "gh pr list"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "gh issue view 123"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "gh run list"
-expect = "read"
+expect = "safe"
 
 ## npm/package manager reads
 
 [[tests]]
 input = "npm list"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "npm ls --depth 0"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "npm test"
-expect = "read"
+expect = "safe"
 
 ## Docker reads
 
 [[tests]]
 input = "docker ps"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "docker images"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "docker logs my-container"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "docker inspect my-container"
-expect = "read"
+expect = "safe"
 
 ## === safecmd BLOCKED commands ===
 
@@ -276,7 +276,7 @@ expect = "write"
 
 [[tests]]
 input = "sudo ls"
-expect = "read"
+expect = "safe"
 note = "We classify sudo ls as read (recursive eval). safecmd blocks all sudo. Our approach is more permissive but correct."
 
 [[tests]]
@@ -327,7 +327,7 @@ note = "-x extracts, which is a write"
 
 [[tests]]
 input = "tar -tf archive.tar"
-expect = "read"
+expect = "safe"
 note = "-t just lists contents"
 
 [[tests]]

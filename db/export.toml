@@ -1,2 +1,2 @@
 command = "export"
-default = "read"
+default = "safe"

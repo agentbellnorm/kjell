@@ -12,15 +12,15 @@ import (
 func TestPlainFormatRead(t *testing.T) {
 	result := &classifier.ClassifyResult{
 		Input:          "grep -r TODO",
-		Classification: database.Read,
+		Classification: database.Safe,
 		Components: []classifier.ComponentResult{
-			{Command: "grep", Classification: database.Read, Reason: "grep: default read"},
+			{Command: "grep", Classification: database.Safe, Reason: "grep: default safe"},
 		},
 	}
 
 	output := PlainFormat(result)
-	if !strings.HasPrefix(output, "READ") {
-		t.Errorf("expected output to start with READ, got %q", output)
+	if !strings.HasPrefix(output, "SAFE") {
+		t.Errorf("expected output to start with SAFE, got %q", output)
 	}
 }
 
@@ -42,9 +42,9 @@ func TestPlainFormatWrite(t *testing.T) {
 func TestJSONFormat(t *testing.T) {
 	result := &classifier.ClassifyResult{
 		Input:          "grep -r TODO",
-		Classification: database.Read,
+		Classification: database.Safe,
 		Components: []classifier.ComponentResult{
-			{Command: "grep", Classification: database.Read, Reason: "grep: default read"},
+			{Command: "grep", Classification: database.Safe, Reason: "grep: default safe"},
 		},
 	}
 
@@ -58,8 +58,8 @@ func TestJSONFormat(t *testing.T) {
 		t.Fatalf("invalid JSON: %v", err)
 	}
 
-	if parsed.Classification != "read" {
-		t.Errorf("expected classification 'read', got %q", parsed.Classification)
+	if parsed.Classification != "safe" {
+		t.Errorf("expected classification 'safe', got %q", parsed.Classification)
 	}
 	if parsed.Input != "grep -r TODO" {
 		t.Errorf("expected input 'grep -r TODO', got %q", parsed.Input)
@@ -103,9 +103,9 @@ func TestClaudeCodeExtractMissingCommand(t *testing.T) {
 func TestClaudeCodeFormatAllow(t *testing.T) {
 	result := &classifier.ClassifyResult{
 		Input:          "ls -la",
-		Classification: database.Read,
+		Classification: database.Safe,
 		Components: []classifier.ComponentResult{
-			{Command: "ls", Classification: database.Read, Reason: "ls: default read"},
+			{Command: "ls", Classification: database.Safe, Reason: "ls: default safe"},
 		},
 	}
 

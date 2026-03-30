@@ -2,37 +2,37 @@ command = "gh"
 default = "unknown"
 
 [subcommands.repo]
-default = "read"
+default = "safe"
 
 [subcommands.issue]
-default = "read"
+default = "safe"
 
 [subcommands.pr]
-default = "read"
+default = "safe"
 
 [subcommands.run]
-default = "read"
+default = "safe"
 
 [subcommands.workflow]
-default = "read"
+default = "safe"
 
 [subcommands.release]
-default = "read"
+default = "safe"
 
 [subcommands.gist]
-default = "read"
+default = "safe"
 
 [subcommands.search]
-default = "read"
+default = "safe"
 
 [subcommands.browse]
-default = "read"
+default = "safe"
 
 [subcommands.auth]
-default = "read"
+default = "safe"
 
 [subcommands.api]
-default = "read"
+default = "safe"
 
 [[subcommands.api.flags]]
 flag = ["-X", "--method"]
@@ -40,7 +40,7 @@ effect = "unknown"
 reason = "Depends on HTTP method"
 
 [subcommands.api.flags.values]
-GET = "read"
+GET = "safe"
 POST = "write"
 PUT = "write"
 DELETE = "write"

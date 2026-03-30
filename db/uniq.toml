@@ -1,2 +1,2 @@
 command = "uniq"
-default = "read"
+default = "safe"

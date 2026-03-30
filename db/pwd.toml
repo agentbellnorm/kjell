@@ -1,2 +1,2 @@
 command = "pwd"
-default = "read"
+default = "safe"

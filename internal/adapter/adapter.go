@@ -113,7 +113,7 @@ func ClaudeCodeExtract(r io.Reader) (string, error) {
 // For write/unknown, it returns empty output so Claude Code's normal
 // permission system handles it (including user's "always allow" rules).
 func ClaudeCodeFormat(result *classifier.ClassifyResult) (string, error) {
-	if result.Classification != database.Read {
+	if result.Classification != database.Safe {
 		// No output — let Claude Code's permission system decide.
 		return "", nil
 	}
@@ -122,7 +122,7 @@ func ClaudeCodeFormat(result *classifier.ClassifyResult) (string, error) {
 		HookSpecificOutput: ClaudeCodeHookOutput{
 			HookEventName:            "PreToolUse",
 			PermissionDecision:       "allow",
-			PermissionDecisionReason: "kjell: read-only",
+			PermissionDecisionReason: "kjell: safe",
 		},
 	}
 
@@ -134,14 +134,14 @@ func ClaudeCodeFormat(result *classifier.ClassifyResult) (string, error) {
 }
 
 func formatDecisionReason(result *classifier.ClassifyResult) string {
-	if result.Classification == database.Read {
-		return "kjell: read-only"
+	if result.Classification == database.Safe {
+		return "kjell: safe"
 	}
 
 	// For ask decisions, only show the components that caused it
 	var flagged []string
 	for _, comp := range result.Components {
-		if comp.Classification != database.Read && comp.Reason != "" {
+		if comp.Classification != database.Safe && comp.Reason != "" {
 			flagged = append(flagged, comp.Reason)
 		}
 	}

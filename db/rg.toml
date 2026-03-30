@@ -1,2 +1,2 @@
 command = "rg"
-default = "read"
+default = "safe"

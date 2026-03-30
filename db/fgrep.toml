@@ -1,2 +1,2 @@
 command = "fgrep"
-default = "read"
+default = "safe"

@@ -1,4 +1,4 @@
 command = "watch"
-default = "read"
+default = "safe"
 recursive = true
 inner_command_position = 1

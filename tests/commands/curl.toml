@@ -1,10 +1,10 @@
 [[tests]]
 input = "curl https://example.com"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "curl -X GET https://example.com/api"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "curl -X POST https://example.com/api"
@@ -28,5 +28,5 @@ expect = "write"
 
 [[tests]]
 input = "curl -v https://example.com"
-expect = "read"
+expect = "safe"
 note = "-v is just verbose output, still read"

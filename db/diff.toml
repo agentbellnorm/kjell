@@ -1,2 +1,2 @@
 command = "diff"
-default = "read"
+default = "safe"

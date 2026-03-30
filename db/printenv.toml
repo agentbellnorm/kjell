@@ -1,2 +1,2 @@
 command = "printenv"
-default = "read"
+default = "safe"

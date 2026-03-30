@@ -1,2 +1,2 @@
 command = "uname"
-default = "read"
+default = "safe"

@@ -1,2 +1,2 @@
 command = "stat"
-default = "read"
+default = "safe"

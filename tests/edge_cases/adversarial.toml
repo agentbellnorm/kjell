@@ -2,7 +2,7 @@
 
 [[tests]]
 input = "result=$(grep -r TODO src/)"
-expect = "read"
+expect = "safe"
 note = "Read-only command in $() assignment"
 
 [[tests]]
@@ -12,7 +12,7 @@ note = "Destructive command hiding inside $() assignment — must catch this"
 
 [[tests]]
 input = "output=$(curl -s https://api.example.com | jq .status)"
-expect = "read"
+expect = "safe"
 note = "Read pipeline inside $() assignment"
 
 [[tests]]
@@ -24,7 +24,7 @@ note = "find -delete inside $() assignment"
 
 [[tests]]
 input = "for f in *.txt; do cat \"$f\"; done"
-expect = "read"
+expect = "safe"
 note = "For loop with read-only body"
 
 [[tests]]
@@ -34,7 +34,7 @@ note = "For loop with destructive body"
 
 [[tests]]
 input = "for cmd in \"ps aux\"; do result=$(./kjell check \"$cmd\" 2>&1 | head -1); printf \"%-8s | %s\\n\" \"$result\" \"$cmd\"; done"
-expect = "read"
+expect = "safe"
 note = "The real-world command that triggered the Claude Code permission prompt — now kjell is in DB as read"
 
 ## While loops
@@ -46,7 +46,7 @@ note = "Infinite delete loop"
 
 [[tests]]
 input = "while read -r line; do echo \"$line\"; done < file.txt"
-expect = "read"
+expect = "safe"
 note = "Read loop over file"
 
 ## If/then/else
@@ -58,7 +58,7 @@ note = "Conditional with write in then-branch"
 
 [[tests]]
 input = "if [ -f foo ]; then cat foo; fi"
-expect = "read"
+expect = "safe"
 note = "Conditional with read in then-branch"
 
 [[tests]]
@@ -70,7 +70,7 @@ note = "Write hiding in else-branch"
 
 [[tests]]
 input = "sudo env FOO=bar xargs grep TODO"
-expect = "read"
+expect = "safe"
 note = "4-deep recursive chain: sudo → env → xargs → grep"
 
 [[tests]]
@@ -79,11 +79,11 @@ expect = "write"
 
 [[tests]]
 input = "time ls -la"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "nice -n 10 grep -r TODO ."
-expect = "read"
+expect = "safe"
 note = "nice -n takes a value, grep is the actual inner command"
 
 ## Dynamic commands — always unknown
@@ -126,12 +126,12 @@ note = "-exec sed -i: recursive into sed, -i makes it write"
 
 [[tests]]
 input = "find . -name '*.log' -exec cat {} \\;"
-expect = "read"
+expect = "safe"
 note = "-exec cat: recursive into cat, which is read"
 
 [[tests]]
 input = "find . -type f -exec grep -l TODO {} +"
-expect = "read"
+expect = "safe"
 note = "-exec grep: recursive into grep, which is read"
 
 ## Nested shell execution
@@ -143,7 +143,7 @@ note = "sudo → bash -c → echo with redirect → write"
 
 [[tests]]
 input = "sh -c 'cat /etc/passwd | grep root'"
-expect = "read"
+expect = "safe"
 note = "sh -c with read-only pipeline inside"
 
 [[tests]]
@@ -172,7 +172,7 @@ note = "Real-world git workflow — all writes"
 
 [[tests]]
 input = "git status && git log --oneline -5"
-expect = "read"
+expect = "safe"
 note = "Read-only git workflow"
 
 [[tests]]
@@ -189,7 +189,7 @@ note = "Looks like echo (read) but substitution is destructive"
 
 [[tests]]
 input = "cat $(find . -name '*.txt')"
-expect = "read"
+expect = "safe"
 note = "Command substitution with read-only find"
 
 ## Tar edge cases
@@ -201,7 +201,7 @@ note = "-c creates archive"
 
 [[tests]]
 input = "tar -tf archive.tar"
-expect = "read"
+expect = "safe"
 note = "-t lists contents"
 
 [[tests]]
@@ -218,7 +218,7 @@ note = "docker run without -- separator, can't extract inner command"
 
 [[tests]]
 input = "docker exec container -- ls -la"
-expect = "read"
+expect = "safe"
 note = "docker exec with -- separator, extracts ls"
 
 [[tests]]
@@ -230,25 +230,25 @@ note = "docker exec with -- separator, extracts rm"
 
 [[tests]]
 input = "diff <(sort file1) <(sort file2)"
-expect = "read"
+expect = "safe"
 note = "Process substitution with read-only commands"
 
 ## Test/bracket commands
 
 [[tests]]
 input = "[ -f /etc/passwd ] && echo exists"
-expect = "read"
+expect = "safe"
 note = "Test command is read-only"
 
 [[tests]]
 input = "test -d /tmp && ls /tmp"
-expect = "read"
+expect = "safe"
 
 ## Env var prefix (not env command)
 
 [[tests]]
 input = "FOO=bar grep TODO"
-expect = "read"
+expect = "safe"
 note = "Variable assignment prefix doesn't affect classification"
 
 ## Curl with data flags
@@ -264,7 +264,7 @@ note = "--data-raw implies POST"
 
 [[tests]]
 input = "curl -s https://api.example.com | jq '.data[]'"
-expect = "read"
+expect = "safe"
 note = "Curl GET piped to jq is read"
 
 ## Deeply nested: sudo → env → nohup → bash -c → write
@@ -278,10 +278,10 @@ note = "4-deep: sudo → env → nohup → bash -c → rm"
 
 [[tests]]
 input = "sed -n '/start/,/end/p' file.txt"
-expect = "read"
+expect = "safe"
 note = "sed without -i is read-only, -n just suppresses default output"
 
 [[tests]]
 input = "sed 's/foo/bar/g' file.txt | sort | uniq"
-expect = "read"
+expect = "safe"
 note = "sed without -i piped to other read commands"

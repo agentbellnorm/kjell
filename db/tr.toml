@@ -1,2 +1,2 @@
 command = "tr"
-default = "read"
+default = "safe"

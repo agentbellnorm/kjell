@@ -2,13 +2,13 @@ command = "go"
 default = "unknown"
 
 [subcommands.version]
-default = "read"
+default = "safe"
 
 [subcommands.build]
-default = "write"
+default = "safe"
 
 [subcommands.test]
-default = "read"
+default = "safe"
 
 [subcommands.run]
 default = "unknown"
@@ -20,10 +20,10 @@ default = "write"
 default = "write"
 
 [subcommands.vet]
-default = "read"
+default = "safe"
 
 [subcommands.fmt]
 default = "write"
 
 [subcommands.doc]
-default = "read"
+default = "safe"

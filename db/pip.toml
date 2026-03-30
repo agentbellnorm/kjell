@@ -2,7 +2,7 @@ command = "pip"
 default = "unknown"
 
 [subcommands.list]
-default = "read"
+default = "safe"
 
 [subcommands.install]
 default = "write"
@@ -11,7 +11,7 @@ default = "write"
 default = "write"
 
 [subcommands.show]
-default = "read"
+default = "safe"
 
 [subcommands.freeze]
-default = "read"
+default = "safe"

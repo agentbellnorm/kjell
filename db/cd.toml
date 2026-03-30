@@ -1,2 +1,2 @@
 command = "cd"
-default = "read"
+default = "safe"

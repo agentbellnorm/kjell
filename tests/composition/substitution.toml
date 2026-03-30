@@ -1,6 +1,6 @@
 [[tests]]
 input = "echo $(ls)"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "echo $(rm file)"

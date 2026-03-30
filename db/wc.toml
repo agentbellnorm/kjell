@@ -1,2 +1,2 @@
 command = "wc"
-default = "read"
+default = "safe"

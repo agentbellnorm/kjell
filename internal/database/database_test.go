@@ -16,7 +16,7 @@ func testFS(files map[string]string) fstest.MapFS {
 func TestLoadMinimalCommand(t *testing.T) {
 	fs := testFS(map[string]string{
 		"grep.toml": `command = "grep"
-default = "read"`,
+default = "safe"`,
 	})
 
 	db, err := LoadFromFS(fs)
@@ -31,7 +31,7 @@ default = "read"`,
 	if def.Command != "grep" {
 		t.Errorf("expected command 'grep', got %q", def.Command)
 	}
-	if def.Default != Read {
+	if def.Default != Safe {
 		t.Errorf("expected default 'read', got %q", def.Default)
 	}
 }
@@ -39,7 +39,7 @@ default = "read"`,
 func TestLookupNotFound(t *testing.T) {
 	fs := testFS(map[string]string{
 		"grep.toml": `command = "grep"
-default = "read"`,
+default = "safe"`,
 	})
 
 	db, err := LoadFromFS(fs)
@@ -55,7 +55,7 @@ default = "read"`,
 func TestLoadCommandWithFlags(t *testing.T) {
 	fs := testFS(map[string]string{
 		"sed.toml": `command = "sed"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-i", "--in-place"]
@@ -93,7 +93,7 @@ func TestLoadCommandWithSubcommands(t *testing.T) {
 default = "unknown"
 
 [subcommands.log]
-default = "read"
+default = "safe"
 
 [subcommands.push]
 default = "write"`,
@@ -111,7 +111,7 @@ default = "write"`,
 	if len(def.Subcommands) != 2 {
 		t.Fatalf("expected 2 subcommands, got %d", len(def.Subcommands))
 	}
-	if sub, ok := def.Subcommands["log"]; !ok || sub.Default != Read {
+	if sub, ok := def.Subcommands["log"]; !ok || sub.Default != Safe {
 		t.Errorf("expected subcommand 'log' with default 'read'")
 	}
 	if sub, ok := def.Subcommands["push"]; !ok || sub.Default != Write {
@@ -144,7 +144,7 @@ inner_command_position = 1`,
 func TestLoadRecursiveFlag(t *testing.T) {
 	fs := testFS(map[string]string{
 		"find.toml": `command = "find"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-exec"]
@@ -178,7 +178,7 @@ effect = "write"`,
 
 func TestValidationMissingCommand(t *testing.T) {
 	fs := testFS(map[string]string{
-		"bad.toml": `default = "read"`,
+		"bad.toml": `default = "safe"`,
 	})
 
 	_, err := LoadFromFS(fs)
@@ -202,7 +202,7 @@ default = "dangerous"`,
 func TestValidationInvalidFlagEffect(t *testing.T) {
 	fs := testFS(map[string]string{
 		"bad.toml": `command = "foo"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-x"]
@@ -233,7 +233,7 @@ default = "unknown"
 func TestValidationFlagMissingNames(t *testing.T) {
 	fs := testFS(map[string]string{
 		"bad.toml": `command = "foo"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = []
@@ -249,7 +249,7 @@ effect = "write"`,
 func TestLookupStripsPath(t *testing.T) {
 	fs := testFS(map[string]string{
 		"grep.toml": `command = "grep"
-default = "read"`,
+default = "safe"`,
 	})
 
 	db, err := LoadFromFS(fs)
@@ -265,7 +265,7 @@ default = "read"`,
 func TestMultipleFiles(t *testing.T) {
 	fs := testFS(map[string]string{
 		"grep.toml": `command = "grep"
-default = "read"`,
+default = "safe"`,
 		"rm.toml": `command = "rm"
 default = "write"`,
 		"readme.md": `this is not a toml file`,
@@ -290,7 +290,7 @@ default = "write"`,
 func TestValueDependentFlags(t *testing.T) {
 	fs := testFS(map[string]string{
 		"curl.toml": `command = "curl"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-X", "--request"]
@@ -298,8 +298,8 @@ effect = "unknown"
 reason = "Depends on HTTP method"
 
 [flags.values]
-GET = "read"
-HEAD = "read"
+GET = "safe"
+HEAD = "safe"
 POST = "write"
 PUT = "write"
 DELETE = "write"
@@ -321,7 +321,7 @@ PATCH = "write"`,
 	if def.Flags[0].Values["POST"] != "write" {
 		t.Errorf("expected POST -> write")
 	}
-	if def.Flags[0].Values["GET"] != "read" {
+	if def.Flags[0].Values["GET"] != "safe" {
 		t.Errorf("expected GET -> read")
 	}
 }

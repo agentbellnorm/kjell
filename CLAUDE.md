@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is kjell?
 
-kjell classifies shell commands as **read**, **write**, or **unknown** for AI coding agents. It uses a proper bash parser (`mvdan.cc/sh/v3`) combined with a TOML database of 105+ command definitions to handle pipes, redirects, `&&`/`||`, command substitution, loops, conditionals, and recursive wrappers (`sudo`, `env`, `xargs`, `sh -c`, `find -exec`).
+kjell classifies shell commands as **safe**, **write**, or **unknown** for AI coding agents. It uses a proper bash parser (`mvdan.cc/sh/v3`) combined with a TOML database of 105+ command definitions to handle pipes, redirects, `&&`/`||`, command substitution, loops, conditionals, and recursive wrappers (`sudo`, `env`, `xargs`, `sh -c`, `find -exec`).
 
 ## Commands
 
@@ -24,9 +24,9 @@ The pipeline is: **parser → classifier → adapter**
   - Pipelines use "worst case" semantics (if any stage is write, the whole pipeline is write)
   - Redirects to `/dev/null` are harmless; redirects to real files are write
   - Recursive commands (sudo, env, xargs, docker exec) evaluate the inner command up to depth 10
-  - Flags can change classification (e.g., `curl -X GET` → read, `curl -X POST` → write)
+  - Flags can change classification (e.g., `curl -X GET` → safe, `curl -X POST` → write)
 - **`internal/database/`** — Loads TOML command definitions from the embedded filesystem (`db.go` uses `go:embed`)
-- **`internal/adapter/`** — Formats output as plain text, JSON, or Claude Code hook response (`claude-code` format auto-approves reads)
+- **`internal/adapter/`** — Formats output as plain text, JSON, or Claude Code hook response (`claude-code` format auto-approves safe commands)
 - **`db/`** — TOML files defining command classifications with flag-level and subcommand-level granularity
 
 ## Database TOML format
@@ -38,7 +38,7 @@ command = "git"
 default = "unknown"
 
 [subcommands.log]
-default = "read"
+default = "safe"
 
 [subcommands.push]
 default = "write"
@@ -53,6 +53,6 @@ Test cases live in `tests/` as TOML files organized into `commands/`, `compositi
 ```toml
 [[tests]]
 input = "sudo cat /etc/hosts"
-expect = "read"
+expect = "safe"
 note = "recursive evaluation through sudo"
 ```

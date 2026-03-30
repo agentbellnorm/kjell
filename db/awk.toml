@@ -1,2 +1,2 @@
 command = "awk"
-default = "read"
+default = "safe"

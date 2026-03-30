@@ -2,16 +2,16 @@ command = "docker"
 default = "unknown"
 
 [subcommands.ps]
-default = "read"
+default = "safe"
 
 [subcommands.images]
-default = "read"
+default = "safe"
 
 [subcommands.logs]
-default = "read"
+default = "safe"
 
 [subcommands.inspect]
-default = "read"
+default = "safe"
 
 [subcommands.build]
 default = "write"

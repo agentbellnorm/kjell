@@ -40,7 +40,7 @@ func (c *Classifier) Classify(input string) (*ClassifyResult, error) {
 }
 
 func (c *Classifier) classifyPipeline(pipeline parser.ParsedPipeline, result *ClassifyResult, depth int) database.Classification {
-	pipeClass := database.Read
+	pipeClass := database.Safe
 
 	for _, cmd := range pipeline.Commands {
 		if cmd.Command == "" {
@@ -401,7 +401,7 @@ func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, 
 
 	result := &ClassifyResult{
 		Input:          input,
-		Classification: database.Read,
+		Classification: database.Safe,
 	}
 
 	for _, pipeline := range expr.Pipelines {
@@ -477,7 +477,7 @@ func isWriteRedirect(r parser.Redirect) bool {
 }
 
 var classificationRank = map[database.Classification]int{
-	database.Read:    0,
+	database.Safe:    0,
 	database.Unknown: 1,
 	database.Write:   2,
 }

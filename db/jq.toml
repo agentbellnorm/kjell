@@ -1,2 +1,2 @@
 command = "jq"
-default = "read"
+default = "safe"

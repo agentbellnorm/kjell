@@ -1,5 +1,5 @@
 command = "curl"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-X", "--request"]
@@ -7,8 +7,8 @@ effect = "unknown"
 reason = "Depends on HTTP method"
 
 [flags.values]
-GET = "read"
-HEAD = "read"
+GET = "safe"
+HEAD = "safe"
 POST = "write"
 PUT = "write"
 DELETE = "write"

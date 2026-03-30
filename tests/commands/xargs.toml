@@ -1,6 +1,6 @@
 [[tests]]
 input = "xargs grep TODO"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "xargs rm"

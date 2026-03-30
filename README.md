@@ -1,6 +1,6 @@
 # kjell
 
-AI coding agents execute shell commands but can't tell which ones are safe. kjell solves this — it parses shell commands and classifies them as **read**, **write**, or **unknown** so agents can auto-approve reads and only prompt for writes.
+AI coding agents execute shell commands but can't tell which ones are safe. kjell solves this — it parses shell commands and classifies them as **safe**, **write**, or **unknown** so agents can auto-approve safe commands and only prompt for writes.
 
 ```bash
 $ kjell check "cat logs/*.txt | grep error | sort"
@@ -37,7 +37,7 @@ Add to `.claude/settings.local.json`:
 }
 ```
 
-Read-only commands auto-approve. Writes and unknowns pass through to Claude Code's normal permission system — your "always allow" rules still work.
+Safe commands auto-approve. Writes and unknowns pass through to Claude Code's normal permission system — your "always allow" rules still work.
 
 ## Install
 

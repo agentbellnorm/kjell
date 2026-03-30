@@ -1,2 +1,2 @@
 command = "id"
-default = "read"
+default = "safe"

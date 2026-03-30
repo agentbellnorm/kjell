@@ -1,2 +1,2 @@
 command = "locate"
-default = "read"
+default = "safe"

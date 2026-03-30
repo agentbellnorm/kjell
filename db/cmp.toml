@@ -1,2 +1,2 @@
 command = "cmp"
-default = "read"
+default = "safe"

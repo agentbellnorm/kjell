@@ -1,2 +1,2 @@
 command = "cal"
-default = "read"
+default = "safe"

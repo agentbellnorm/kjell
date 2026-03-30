@@ -1,2 +1,2 @@
 command = "du"
-default = "read"
+default = "safe"

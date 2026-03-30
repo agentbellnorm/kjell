@@ -1,6 +1,6 @@
 [[tests]]
 input = "tar -tf archive.tar"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "tar -cf archive.tar dir/"

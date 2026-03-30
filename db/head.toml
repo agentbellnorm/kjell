@@ -1,2 +1,2 @@
 command = "head"
-default = "read"
+default = "safe"

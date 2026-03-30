@@ -1,14 +1,14 @@
 [[tests]]
 input = "docker ps"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "docker images"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "docker logs my-container"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "docker build ."

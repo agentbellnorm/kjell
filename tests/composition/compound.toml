@@ -1,6 +1,6 @@
 [[tests]]
 input = "ls && pwd"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "ls && rm file"
@@ -16,7 +16,7 @@ expect = "write"
 
 [[tests]]
 input = "git status && git log --oneline"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git add . && git commit -m 'test'"

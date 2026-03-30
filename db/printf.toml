@@ -1,2 +1,2 @@
 command = "printf"
-default = "read"
+default = "safe"

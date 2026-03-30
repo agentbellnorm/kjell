@@ -158,7 +158,7 @@ func printUsage() {
 
 Commands:
   check [--json] [--format <format>] <command>
-    Classify a shell command as read/write/unknown.
+    Classify a shell command as safe/write/unknown.
     Formats: plain (default), json, claude-code
 
   db stats       Show database statistics

@@ -1,5 +1,5 @@
 command = "find"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-exec", "-execdir"]

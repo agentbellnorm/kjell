@@ -14,19 +14,19 @@ default = "write"
 default = "write"
 
 [subcommands.list]
-default = "read"
+default = "safe"
 
 [subcommands.info]
-default = "read"
+default = "safe"
 
 [subcommands.search]
-default = "read"
+default = "safe"
 
 [subcommands.config]
-default = "read"
+default = "safe"
 
 [subcommands.doctor]
-default = "read"
+default = "safe"
 
 [subcommands.outdated]
-default = "read"
+default = "safe"

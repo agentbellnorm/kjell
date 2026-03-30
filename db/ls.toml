@@ -1,2 +1,2 @@
 command = "ls"
-default = "read"
+default = "safe"

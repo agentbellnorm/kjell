@@ -1,2 +1,2 @@
 command = "bat"
-default = "read"
+default = "safe"

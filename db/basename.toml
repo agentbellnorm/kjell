@@ -1,2 +1,2 @@
 command = "basename"
-default = "read"
+default = "safe"

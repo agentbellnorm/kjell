@@ -1,2 +1,2 @@
 command = "node"
-default = "read"
+default = "safe"

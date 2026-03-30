@@ -1,7 +1,7 @@
 [[tests]]
 input = "cat file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "cat -n file.txt"
-expect = "read"
+expect = "safe"

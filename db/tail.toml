@@ -1,2 +1,2 @@
 command = "tail"
-default = "read"
+default = "safe"

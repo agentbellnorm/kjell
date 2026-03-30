@@ -1,6 +1,6 @@
 [[tests]]
 input = "npm list"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "npm install"
@@ -8,7 +8,7 @@ expect = "write"
 
 [[tests]]
 input = "npm test"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "npm publish"
@@ -16,4 +16,4 @@ expect = "write"
 
 [[tests]]
 input = "npm version"
-expect = "read"
+expect = "safe"

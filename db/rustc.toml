@@ -1,2 +1,2 @@
 command = "rustc"
-default = "read"
+default = "safe"

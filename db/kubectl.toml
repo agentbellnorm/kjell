@@ -2,13 +2,13 @@ command = "kubectl"
 default = "unknown"
 
 [subcommands.get]
-default = "read"
+default = "safe"
 
 [subcommands.describe]
-default = "read"
+default = "safe"
 
 [subcommands.logs]
-default = "read"
+default = "safe"
 
 [subcommands.apply]
 default = "write"
@@ -28,7 +28,7 @@ separator = "--"
 default = "write"
 
 [subcommands.rollout]
-default = "read"
+default = "safe"
 
 [subcommands.port-forward]
-default = "read"
+default = "safe"

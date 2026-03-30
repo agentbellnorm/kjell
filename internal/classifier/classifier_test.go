@@ -10,14 +10,14 @@ import (
 func testDB(t *testing.T) *database.Database {
 	t.Helper()
 	fs := fstest.MapFS{
-		"cat.toml":  {Data: []byte(`command = "cat"` + "\n" + `default = "read"`)},
-		"grep.toml": {Data: []byte(`command = "grep"` + "\n" + `default = "read"`)},
-		"ls.toml":   {Data: []byte(`command = "ls"` + "\n" + `default = "read"`)},
-		"pwd.toml":  {Data: []byte(`command = "pwd"` + "\n" + `default = "read"`)},
-		"sort.toml": {Data: []byte(`command = "sort"` + "\n" + `default = "read"`)},
-		"head.toml": {Data: []byte(`command = "head"` + "\n" + `default = "read"`)},
-		"echo.toml": {Data: []byte(`command = "echo"` + "\n" + `default = "read"`)},
-		"wc.toml":   {Data: []byte(`command = "wc"` + "\n" + `default = "read"`)},
+		"cat.toml":  {Data: []byte(`command = "cat"` + "\n" + `default = "safe"`)},
+		"grep.toml": {Data: []byte(`command = "grep"` + "\n" + `default = "safe"`)},
+		"ls.toml":   {Data: []byte(`command = "ls"` + "\n" + `default = "safe"`)},
+		"pwd.toml":  {Data: []byte(`command = "pwd"` + "\n" + `default = "safe"`)},
+		"sort.toml": {Data: []byte(`command = "sort"` + "\n" + `default = "safe"`)},
+		"head.toml": {Data: []byte(`command = "head"` + "\n" + `default = "safe"`)},
+		"echo.toml": {Data: []byte(`command = "echo"` + "\n" + `default = "safe"`)},
+		"wc.toml":   {Data: []byte(`command = "wc"` + "\n" + `default = "safe"`)},
 		"rm.toml":   {Data: []byte(`command = "rm"` + "\n" + `default = "write"`)},
 		"cp.toml":   {Data: []byte(`command = "cp"` + "\n" + `default = "write"`)},
 		"mv.toml":   {Data: []byte(`command = "mv"` + "\n" + `default = "write"`)},
@@ -25,7 +25,7 @@ func testDB(t *testing.T) *database.Database {
 		"touch.toml": {Data: []byte(`command = "touch"` + "\n" + `default = "write"`)},
 		"tee.toml":  {Data: []byte(`command = "tee"` + "\n" + `default = "write"`)},
 		"sed.toml": {Data: []byte(`command = "sed"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-i", "--in-place"]
@@ -36,13 +36,13 @@ reason = "Edits files in place"
 default = "unknown"
 
 [subcommands.log]
-default = "read"
+default = "safe"
 
 [subcommands.diff]
-default = "read"
+default = "safe"
 
 [subcommands.status]
-default = "read"
+default = "safe"
 
 [subcommands.commit]
 default = "write"
@@ -57,7 +57,7 @@ default = "write"
 default = "write"
 `)},
 		"find.toml": {Data: []byte(`command = "find"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-exec"]
@@ -80,7 +80,7 @@ recursive = true
 inner_command_position = 1
 `)},
 		"env.toml": {Data: []byte(`command = "env"
-default = "read"
+default = "safe"
 recursive = true
 inner_command_position = "after_vars"
 `)},
@@ -90,17 +90,17 @@ recursive = true
 inner_command_position = 1
 `)},
 		"time.toml": {Data: []byte(`command = "time"
-default = "read"
+default = "safe"
 recursive = true
 inner_command_position = 1
 `)},
 		"nice.toml": {Data: []byte(`command = "nice"
-default = "read"
+default = "safe"
 recursive = true
 inner_command_position = 1
 `)},
 		"watch.toml": {Data: []byte(`command = "watch"
-default = "read"
+default = "safe"
 recursive = true
 inner_command_position = 1
 `)},
@@ -126,7 +126,7 @@ inner_command_source = "next_arg_as_shell"
 default = "unknown"
 
 [subcommands.get]
-default = "read"
+default = "safe"
 
 [subcommands.apply]
 default = "write"
@@ -137,7 +137,7 @@ recursive = true
 separator = "--"
 `)},
 		"curl.toml": {Data: []byte(`command = "curl"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-X", "--request"]
@@ -145,8 +145,8 @@ effect = "unknown"
 reason = "Depends on HTTP method"
 
 [flags.values]
-GET = "read"
-HEAD = "read"
+GET = "safe"
+HEAD = "safe"
 POST = "write"
 PUT = "write"
 DELETE = "write"
@@ -189,7 +189,7 @@ func assertClassification(t *testing.T, input string, expected database.Classifi
 // === Step 3: Basic Classification ===
 
 func TestBasicReadCommand(t *testing.T) {
-	assertClassification(t, "grep -r TODO", database.Read)
+	assertClassification(t, "grep -r TODO", database.Safe)
 }
 
 func TestBasicWriteCommand(t *testing.T) {
@@ -201,7 +201,7 @@ func TestUnknownCommand(t *testing.T) {
 }
 
 func TestFlagOverrideToWrite(t *testing.T) {
-	assertClassification(t, "sed 's/foo/bar/' file.txt", database.Read)
+	assertClassification(t, "sed 's/foo/bar/' file.txt", database.Safe)
 	assertClassification(t, "sed -i 's/foo/bar/' file.txt", database.Write)
 	assertClassification(t, "sed --in-place 's/foo/bar/' file.txt", database.Write)
 }
@@ -211,10 +211,10 @@ func TestSedInPlaceWithBackup(t *testing.T) {
 }
 
 func TestSubcommandRead(t *testing.T) {
-	assertClassification(t, "git log", database.Read)
-	assertClassification(t, "git log --oneline", database.Read)
-	assertClassification(t, "git diff", database.Read)
-	assertClassification(t, "git status", database.Read)
+	assertClassification(t, "git log", database.Safe)
+	assertClassification(t, "git log --oneline", database.Safe)
+	assertClassification(t, "git diff", database.Safe)
+	assertClassification(t, "git status", database.Safe)
 }
 
 func TestSubcommandWrite(t *testing.T) {
@@ -231,7 +231,7 @@ func TestGitUnknownSubcommand(t *testing.T) {
 // === Step 4: Composition ===
 
 func TestPipelineAllRead(t *testing.T) {
-	assertClassification(t, "cat file | grep error | sort", database.Read)
+	assertClassification(t, "cat file | grep error | sort", database.Safe)
 }
 
 func TestPipelineOneWrite(t *testing.T) {
@@ -239,7 +239,7 @@ func TestPipelineOneWrite(t *testing.T) {
 }
 
 func TestCompoundAllRead(t *testing.T) {
-	assertClassification(t, "ls && pwd", database.Read)
+	assertClassification(t, "ls && pwd", database.Safe)
 }
 
 func TestCompoundOneWrite(t *testing.T) {
@@ -259,7 +259,7 @@ func TestCommandSubstitutionWrite(t *testing.T) {
 }
 
 func TestCommandSubstitutionRead(t *testing.T) {
-	assertClassification(t, "echo $(ls)", database.Read)
+	assertClassification(t, "echo $(ls)", database.Safe)
 }
 
 func TestPipelineWithRedirect(t *testing.T) {
@@ -267,13 +267,13 @@ func TestPipelineWithRedirect(t *testing.T) {
 }
 
 func TestComplexPipelineRead(t *testing.T) {
-	assertClassification(t, "grep error log.txt | sort | head -20", database.Read)
+	assertClassification(t, "grep error log.txt | sort | head -20", database.Safe)
 }
 
 // === Step 5: Recursive Evaluation ===
 
 func TestSudoRead(t *testing.T) {
-	assertClassification(t, "sudo ls -la", database.Read)
+	assertClassification(t, "sudo ls -la", database.Safe)
 }
 
 func TestSudoWrite(t *testing.T) {
@@ -281,11 +281,11 @@ func TestSudoWrite(t *testing.T) {
 }
 
 func TestEnvRead(t *testing.T) {
-	assertClassification(t, "env FOO=bar grep TODO", database.Read)
+	assertClassification(t, "env FOO=bar grep TODO", database.Safe)
 }
 
 func TestFindExecRead(t *testing.T) {
-	assertClassification(t, `find . -exec cat {} \;`, database.Read)
+	assertClassification(t, `find . -exec cat {} \;`, database.Safe)
 }
 
 func TestFindExecWrite(t *testing.T) {
@@ -297,11 +297,11 @@ func TestFindDelete(t *testing.T) {
 }
 
 func TestKubectlExecRead(t *testing.T) {
-	assertClassification(t, "kubectl exec pod -- ls", database.Read)
+	assertClassification(t, "kubectl exec pod -- ls", database.Safe)
 }
 
 func TestShCRead(t *testing.T) {
-	assertClassification(t, `sh -c 'grep foo bar'`, database.Read)
+	assertClassification(t, `sh -c 'grep foo bar'`, database.Safe)
 }
 
 func TestShCWrite(t *testing.T) {
@@ -309,11 +309,11 @@ func TestShCWrite(t *testing.T) {
 }
 
 func TestBashCRead(t *testing.T) {
-	assertClassification(t, `bash -c 'ls -la'`, database.Read)
+	assertClassification(t, `bash -c 'ls -la'`, database.Safe)
 }
 
 func TestChainedRecursive(t *testing.T) {
-	assertClassification(t, "sudo env FOO=bar xargs grep TODO", database.Read)
+	assertClassification(t, "sudo env FOO=bar xargs grep TODO", database.Safe)
 }
 
 func TestXargsWrite(t *testing.T) {
@@ -321,15 +321,15 @@ func TestXargsWrite(t *testing.T) {
 }
 
 func TestXargsRead(t *testing.T) {
-	assertClassification(t, "xargs grep TODO", database.Read)
+	assertClassification(t, "xargs grep TODO", database.Safe)
 }
 
 func TestTimeRead(t *testing.T) {
-	assertClassification(t, "time ls -la", database.Read)
+	assertClassification(t, "time ls -la", database.Safe)
 }
 
 func TestNiceRead(t *testing.T) {
-	assertClassification(t, "nice -n 10 grep -r TODO .", database.Read)
+	assertClassification(t, "nice -n 10 grep -r TODO .", database.Safe)
 }
 
 func TestXargsNoInnerCommand(t *testing.T) {
@@ -338,13 +338,13 @@ func TestXargsNoInnerCommand(t *testing.T) {
 }
 
 func TestWatchRead(t *testing.T) {
-	assertClassification(t, "watch cat /var/log/syslog", database.Read)
+	assertClassification(t, "watch cat /var/log/syslog", database.Safe)
 }
 
 // === Value-dependent flags ===
 
 func TestCurlDefault(t *testing.T) {
-	assertClassification(t, "curl https://example.com", database.Read)
+	assertClassification(t, "curl https://example.com", database.Safe)
 }
 
 func TestCurlPostFlag(t *testing.T) {
@@ -352,7 +352,7 @@ func TestCurlPostFlag(t *testing.T) {
 }
 
 func TestCurlGetFlag(t *testing.T) {
-	assertClassification(t, "curl -X GET https://example.com/api", database.Read)
+	assertClassification(t, "curl -X GET https://example.com/api", database.Safe)
 }
 
 func TestCurlDataFlag(t *testing.T) {
@@ -386,7 +386,7 @@ func TestSemicolon(t *testing.T) {
 }
 
 func TestCommandLevelFlagDoesNotDowngradeSubcommand(t *testing.T) {
-	// A command-level flag classified as "read" must not downgrade
+	// A command-level flag classified as "safe" must not downgrade
 	// a subcommand that is classified as "write".
 	fs := fstest.MapFS{
 		"tool.toml": {Data: []byte(`command = "tool"
@@ -397,7 +397,7 @@ default = "write"
 
 [[flags]]
 flag = ["--verbose", "-v"]
-effect = "read"
+effect = "safe"
 reason = "Verbose output only"
 `)},
 	}

@@ -1,10 +1,10 @@
 [[tests]]
 input = "find . -name '*.go'"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "find . -type f -name '*.log'"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "find . -name '*.tmp' -delete"
@@ -12,7 +12,7 @@ expect = "write"
 
 [[tests]]
 input = "find . -exec cat {} \\;"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "find . -exec rm {} \\;"

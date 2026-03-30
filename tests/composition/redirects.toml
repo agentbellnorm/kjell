@@ -13,22 +13,22 @@ expect = "write"
 
 [[tests]]
 input = "cat file 2> /dev/null"
-expect = "read"
+expect = "safe"
 note = "Redirect to /dev/null is not a real write"
 
 [[tests]]
 input = "grep error log.txt 2>/dev/null"
-expect = "read"
+expect = "safe"
 note = "Suppressing stderr with /dev/null is harmless"
 
 [[tests]]
 input = "ls foo > /dev/null"
-expect = "read"
+expect = "safe"
 note = "Redirect stdout to /dev/null is not a real write"
 
 [[tests]]
 input = "ls foo > /dev/null 2>&1"
-expect = "read"
+expect = "safe"
 note = "Common output suppression pattern, not a write"
 
 [[tests]]
@@ -38,5 +38,5 @@ note = "stderr redirect to a real file is a write"
 
 [[tests]]
 input = "sort < input.txt"
-expect = "read"
+expect = "safe"
 note = "Input redirect is not a write"

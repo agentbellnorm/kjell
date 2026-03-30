@@ -1,2 +1,2 @@
 command = "ack"
-default = "read"
+default = "safe"

@@ -2,10 +2,10 @@ command = "npm"
 default = "unknown"
 
 [subcommands.list]
-default = "read"
+default = "safe"
 
 [subcommands.ls]
-default = "read"
+default = "safe"
 
 [subcommands.install]
 default = "write"
@@ -17,10 +17,10 @@ default = "write"
 default = "unknown"
 
 [subcommands.test]
-default = "read"
+default = "safe"
 
 [subcommands.version]
-default = "read"
+default = "safe"
 
 [subcommands.init]
 default = "write"

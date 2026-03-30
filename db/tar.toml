@@ -13,5 +13,5 @@ reason = "Extracts files"
 
 [[flags]]
 flag = ["-t", "--list"]
-effect = "read"
+effect = "safe"
 reason = "Lists archive contents"

@@ -1,6 +1,6 @@
 [[tests]]
 input = "sh -c 'grep foo bar'"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "sh -c 'rm -rf /'"
@@ -8,4 +8,4 @@ expect = "write"
 
 [[tests]]
 input = "sh -c 'ls -la'"
-expect = "read"
+expect = "safe"

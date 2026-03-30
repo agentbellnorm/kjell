@@ -1,34 +1,34 @@
 [[tests]]
 input = "git log"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git log --oneline -20"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git diff"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git status"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git show HEAD"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git branch"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git remote -v"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git fetch"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "git commit -m 'feat: spawn'"
@@ -80,12 +80,12 @@ expect = "write"
 
 [[tests]]
 input = "git -C /some/path log --oneline -5"
-expect = "read"
+expect = "safe"
 note = "Flag -C takes an argument; subcommand is log, not the path"
 
 [[tests]]
 input = "git -C /some/path status"
-expect = "read"
+expect = "safe"
 note = "Flag -C with path value should not prevent subcommand detection"
 
 [[tests]]

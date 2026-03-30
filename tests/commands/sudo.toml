@@ -1,6 +1,6 @@
 [[tests]]
 input = "sudo ls -la"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "sudo rm -rf /"
@@ -8,4 +8,4 @@ expect = "write"
 
 [[tests]]
 input = "sudo cat /etc/shadow"
-expect = "read"
+expect = "safe"

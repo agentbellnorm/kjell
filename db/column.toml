@@ -1,2 +1,2 @@
 command = "column"
-default = "read"
+default = "safe"

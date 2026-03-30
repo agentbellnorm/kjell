@@ -1,2 +1,2 @@
 command = "egrep"
-default = "read"
+default = "safe"

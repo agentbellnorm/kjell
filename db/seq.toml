@@ -1,2 +1,2 @@
 command = "seq"
-default = "read"
+default = "safe"

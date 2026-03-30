@@ -1,2 +1,2 @@
 command = "realpath"
-default = "read"
+default = "safe"

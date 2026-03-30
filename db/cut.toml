@@ -1,2 +1,2 @@
 command = "cut"
-default = "read"
+default = "safe"

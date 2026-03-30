@@ -1,2 +1,2 @@
 command = "whereis"
-default = "read"
+default = "safe"
