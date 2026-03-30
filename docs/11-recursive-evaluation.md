@@ -86,7 +86,7 @@ inner_command_position = 1   # first non-flag argument after sudo's own flags
 
 # db/env.toml
 command = "env"
-default = "read"             # env with no command just prints env vars
+default = "safe"             # env with no command just prints env vars
 recursive = true
 inner_command_position = "after_vars"  # skip VAR=val pairs, then classify
 ```
@@ -96,7 +96,7 @@ For exec-style flags, mark the flag as triggering recursion:
 ```toml
 # db/find.toml
 command = "find"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-exec"]
@@ -128,7 +128,7 @@ effect = "write"
 command = "kubectl"
 
 [subcommands.get]
-default = "read"
+default = "safe"
 
 [subcommands.apply]
 default = "write"

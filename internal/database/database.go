@@ -168,6 +168,6 @@ func validateClassification(filename, context, value string) error {
 	case Safe, Write, Unknown:
 		return nil
 	default:
-		return fmt.Errorf("%s: %s has invalid classification %q (must be read/write/unknown)", filename, context, value)
+		return fmt.Errorf("%s: %s has invalid classification %q (must be safe/write/unknown)", filename, context, value)
 	}
 }

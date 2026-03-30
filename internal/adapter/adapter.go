@@ -109,7 +109,7 @@ func ClaudeCodeExtract(r io.Reader) (string, error) {
 }
 
 // ClaudeCodeFormat formats a ClassifyResult as Claude Code hook output JSON.
-// For read commands, it returns "allow" to auto-approve.
+// For safe commands, it returns "allow" to auto-approve.
 // For write/unknown, it returns empty output so Claude Code's normal
 // permission system handles it (including user's "always allow" rules).
 func ClaudeCodeFormat(result *classifier.ClassifyResult) (string, error) {

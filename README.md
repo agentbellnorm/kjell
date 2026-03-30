@@ -4,7 +4,7 @@ AI coding agents execute shell commands but can't tell which ones are safe. kjel
 
 ```bash
 $ kjell check "cat logs/*.txt | grep error | sort"
-READ
+SAFE
 
 $ kjell check "sed -i 's/foo/bar/g' config.yaml"
 WRITE
@@ -56,7 +56,7 @@ Or grab a binary from [GitHub Releases](https://github.com/agentbellnorm/kjell/r
 ## CLI
 
 ```bash
-kjell check "grep -r TODO src/"         # READ
+kjell check "grep -r TODO src/"         # SAFE
 kjell check --json "rm -rf /tmp/junk"   # JSON output
 kjell db stats                           # show DB size
 kjell db lookup git                      # show a command's entry

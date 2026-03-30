@@ -116,7 +116,7 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 
 	// Check flags against the command-level flags.
 	// When no subcommand matched, flags replace the default
-	// (e.g., tar is unknown by default, but -t makes it read).
+	// (e.g., tar is unknown by default, but -t makes it safe).
 	// When a subcommand was matched, flags compose with worst-of
 	// to avoid downgrading a write subcommand.
 	if len(def.Flags) > 0 {
@@ -483,7 +483,7 @@ var classificationRank = map[database.Classification]int{
 }
 
 // worst returns the more dangerous classification.
-// write > unknown > read
+// write > unknown > safe
 func worst(a, b database.Classification) database.Classification {
 	if a == "" {
 		return b

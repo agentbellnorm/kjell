@@ -188,7 +188,7 @@ func assertClassification(t *testing.T, input string, expected database.Classifi
 
 // === Step 3: Basic Classification ===
 
-func TestBasicReadCommand(t *testing.T) {
+func TestBasicSafeCommand(t *testing.T) {
 	assertClassification(t, "grep -r TODO", database.Safe)
 }
 
@@ -210,7 +210,7 @@ func TestSedInPlaceWithBackup(t *testing.T) {
 	assertClassification(t, "sed -i.bak 's/foo/bar/' file.txt", database.Write)
 }
 
-func TestSubcommandRead(t *testing.T) {
+func TestSubcommandSafe(t *testing.T) {
 	assertClassification(t, "git log", database.Safe)
 	assertClassification(t, "git log --oneline", database.Safe)
 	assertClassification(t, "git diff", database.Safe)
@@ -230,7 +230,7 @@ func TestGitUnknownSubcommand(t *testing.T) {
 
 // === Step 4: Composition ===
 
-func TestPipelineAllRead(t *testing.T) {
+func TestPipelineAllSafe(t *testing.T) {
 	assertClassification(t, "cat file | grep error | sort", database.Safe)
 }
 
@@ -258,7 +258,7 @@ func TestCommandSubstitutionWrite(t *testing.T) {
 	assertClassification(t, "echo $(rm file)", database.Write)
 }
 
-func TestCommandSubstitutionRead(t *testing.T) {
+func TestCommandSubstitutionSafe(t *testing.T) {
 	assertClassification(t, "echo $(ls)", database.Safe)
 }
 
@@ -266,13 +266,13 @@ func TestPipelineWithRedirect(t *testing.T) {
 	assertClassification(t, "grep error log.txt | sort > output.txt", database.Write)
 }
 
-func TestComplexPipelineRead(t *testing.T) {
+func TestComplexPipelineSafe(t *testing.T) {
 	assertClassification(t, "grep error log.txt | sort | head -20", database.Safe)
 }
 
 // === Step 5: Recursive Evaluation ===
 
-func TestSudoRead(t *testing.T) {
+func TestSudoSafe(t *testing.T) {
 	assertClassification(t, "sudo ls -la", database.Safe)
 }
 
@@ -280,11 +280,11 @@ func TestSudoWrite(t *testing.T) {
 	assertClassification(t, "sudo rm -rf /", database.Write)
 }
 
-func TestEnvRead(t *testing.T) {
+func TestEnvSafe(t *testing.T) {
 	assertClassification(t, "env FOO=bar grep TODO", database.Safe)
 }
 
-func TestFindExecRead(t *testing.T) {
+func TestFindExecSafe(t *testing.T) {
 	assertClassification(t, `find . -exec cat {} \;`, database.Safe)
 }
 
@@ -296,11 +296,11 @@ func TestFindDelete(t *testing.T) {
 	assertClassification(t, "find . -name '*.tmp' -delete", database.Write)
 }
 
-func TestKubectlExecRead(t *testing.T) {
+func TestKubectlExecSafe(t *testing.T) {
 	assertClassification(t, "kubectl exec pod -- ls", database.Safe)
 }
 
-func TestShCRead(t *testing.T) {
+func TestShCSafe(t *testing.T) {
 	assertClassification(t, `sh -c 'grep foo bar'`, database.Safe)
 }
 
@@ -308,7 +308,7 @@ func TestShCWrite(t *testing.T) {
 	assertClassification(t, `sh -c 'rm -rf /'`, database.Write)
 }
 
-func TestBashCRead(t *testing.T) {
+func TestBashCSafe(t *testing.T) {
 	assertClassification(t, `bash -c 'ls -la'`, database.Safe)
 }
 
@@ -337,7 +337,7 @@ func TestXargsNoInnerCommand(t *testing.T) {
 	assertClassification(t, "xargs", database.Unknown)
 }
 
-func TestWatchRead(t *testing.T) {
+func TestWatchSafe(t *testing.T) {
 	assertClassification(t, "watch cat /var/log/syslog", database.Safe)
 }
 

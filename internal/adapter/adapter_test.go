@@ -9,7 +9,7 @@ import (
 	"github.com/agentbellnorm/kjell/internal/database"
 )
 
-func TestPlainFormatRead(t *testing.T) {
+func TestPlainFormatSafe(t *testing.T) {
 	result := &classifier.ClassifyResult{
 		Input:          "grep -r TODO",
 		Classification: database.Safe,

@@ -32,7 +32,7 @@ default = "safe"`,
 		t.Errorf("expected command 'grep', got %q", def.Command)
 	}
 	if def.Default != Safe {
-		t.Errorf("expected default 'read', got %q", def.Default)
+		t.Errorf("expected default 'safe', got %q", def.Default)
 	}
 }
 
@@ -112,7 +112,7 @@ default = "write"`,
 		t.Fatalf("expected 2 subcommands, got %d", len(def.Subcommands))
 	}
 	if sub, ok := def.Subcommands["log"]; !ok || sub.Default != Safe {
-		t.Errorf("expected subcommand 'log' with default 'read'")
+		t.Errorf("expected subcommand 'log' with default 'safe'")
 	}
 	if sub, ok := def.Subcommands["push"]; !ok || sub.Default != Write {
 		t.Errorf("expected subcommand 'push' with default 'write'")
@@ -322,6 +322,6 @@ PATCH = "write"`,
 		t.Errorf("expected POST -> write")
 	}
 	if def.Flags[0].Values["GET"] != "safe" {
-		t.Errorf("expected GET -> read")
+		t.Errorf("expected GET -> safe")
 	}
 }

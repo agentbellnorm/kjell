@@ -15,7 +15,7 @@ Start with the simplest thing that solves the core problem.
 ```toml
 # db/grep.toml
 command = "grep"
-default = "read"
+default = "safe"
 ```
 
 That's a valid entry. grep is read-only, no flags change that. Done.
@@ -25,7 +25,7 @@ That's a valid entry. grep is read-only, no flags change that. Done.
 ```toml
 # db/sed.toml
 command = "sed"
-default = "read"
+default = "safe"
 
 [[flags]]
 flag = ["-i", "--in-place"]
@@ -40,13 +40,13 @@ reason = "Edits files in place"
 command = "git"
 
 [subcommands.log]
-default = "read"
+default = "safe"
 
 [subcommands.diff]
-default = "read"
+default = "safe"
 
 [subcommands.status]
-default = "read"
+default = "safe"
 
 [subcommands.commit]
 default = "write"
@@ -200,7 +200,7 @@ Keep it minimal. A test is an input and an expected classification.
 
 [[tests]]
 input = "sed 's/foo/bar/' file.txt"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "sed -i 's/foo/bar/' file.txt"
@@ -220,7 +220,7 @@ Optional `note` field for non-obvious cases:
 ```toml
 [[tests]]
 input = "sed -n 's/foo/bar/p' file.txt"
-expect = "read"
+expect = "safe"
 note = "-n suppresses output, -i not present, still read-only"
 ```
 
@@ -231,7 +231,7 @@ note = "-n suppresses output, -i not present, still read-only"
 
 [[tests]]
 input = "cat file.txt | grep error"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "cat file.txt | tee output.log"
@@ -240,7 +240,7 @@ note = "tee writes to a file"
 
 [[tests]]
 input = "grep error log.txt | sort | head -20"
-expect = "read"
+expect = "safe"
 
 [[tests]]
 input = "echo hello > file.txt"
