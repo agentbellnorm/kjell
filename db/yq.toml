@@ -1,0 +1,2 @@
+command = "yq"
+default = "safe"

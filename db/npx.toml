@@ -1,0 +1,4 @@
+command = "npx"
+default = "unknown"
+recursive = true
+inner_command_position = 1

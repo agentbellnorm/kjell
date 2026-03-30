@@ -1,0 +1,45 @@
+command = "podman"
+default = "unknown"
+
+[subcommands.ps]
+default = "safe"
+
+[subcommands.images]
+default = "safe"
+
+[subcommands.logs]
+default = "safe"
+
+[subcommands.inspect]
+default = "safe"
+
+[subcommands.build]
+default = "write"
+
+[subcommands.run]
+default = "unknown"
+recursive = true
+separator = "--"
+
+[subcommands.exec]
+default = "unknown"
+recursive = true
+separator = "--"
+
+[subcommands.pull]
+default = "write"
+
+[subcommands.push]
+default = "write"
+
+[subcommands.rm]
+default = "write"
+
+[subcommands.rmi]
+default = "write"
+
+[subcommands.stop]
+default = "write"
+
+[subcommands.start]
+default = "write"

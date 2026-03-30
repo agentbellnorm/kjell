@@ -1,0 +1,2 @@
+command = "netstat"
+default = "safe"

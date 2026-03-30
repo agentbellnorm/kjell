@@ -1,0 +1,2 @@
+command = "pkill"
+default = "write"

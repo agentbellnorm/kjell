@@ -1,0 +1,2 @@
+command = "ssh-keygen"
+default = "write"

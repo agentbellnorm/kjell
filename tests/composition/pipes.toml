@@ -21,5 +21,5 @@ expect = "safe"
 
 [[tests]]
 input = "history | grep -v -E 'ls|cd|gs' | less"
-expect = "unknown"
-note = "history is not in database"
+expect = "safe"
+note = "all three commands are safe"

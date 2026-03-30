@@ -1,0 +1,32 @@
+command = "ollama"
+default = "unknown"
+
+[subcommands.list]
+default = "safe"
+
+[subcommands.show]
+default = "safe"
+
+[subcommands.ps]
+default = "safe"
+
+[subcommands.run]
+default = "safe"
+
+[subcommands.pull]
+default = "write"
+
+[subcommands.push]
+default = "write"
+
+[subcommands.rm]
+default = "write"
+
+[subcommands.create]
+default = "write"
+
+[subcommands.serve]
+default = "write"
+
+[subcommands.cp]
+default = "write"

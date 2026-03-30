@@ -1,0 +1,2 @@
+command = "scp"
+default = "write"

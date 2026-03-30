@@ -1,0 +1,55 @@
+command = "docker-compose"
+default = "unknown"
+
+[subcommands.ps]
+default = "safe"
+
+[subcommands.logs]
+default = "safe"
+
+[subcommands.config]
+default = "safe"
+
+[subcommands.images]
+default = "safe"
+
+[subcommands.top]
+default = "safe"
+
+[subcommands.ls]
+default = "safe"
+
+[subcommands.version]
+default = "safe"
+
+[subcommands.up]
+default = "write"
+
+[subcommands.down]
+default = "write"
+
+[subcommands.build]
+default = "write"
+
+[subcommands.pull]
+default = "write"
+
+[subcommands.push]
+default = "write"
+
+[subcommands.rm]
+default = "write"
+
+[subcommands.start]
+default = "write"
+
+[subcommands.stop]
+default = "write"
+
+[subcommands.restart]
+default = "write"
+
+[subcommands.exec]
+default = "unknown"
+recursive = true
+separator = "--"

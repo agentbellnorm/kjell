@@ -1,0 +1,2 @@
+command = "zip"
+default = "write"

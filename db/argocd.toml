@@ -1,0 +1,23 @@
+command = "argocd"
+default = "unknown"
+
+[subcommands.app]
+default = "unknown"
+
+[subcommands.version]
+default = "safe"
+
+[subcommands.account]
+default = "safe"
+
+[subcommands.cluster]
+default = "unknown"
+
+[subcommands.repo]
+default = "unknown"
+
+[subcommands.login]
+default = "write"
+
+[subcommands.logout]
+default = "write"

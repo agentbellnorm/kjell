@@ -1,0 +1,41 @@
+command = "yarn"
+default = "unknown"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.add]
+default = "write"
+
+[subcommands.remove]
+default = "write"
+
+[subcommands.list]
+default = "safe"
+
+[subcommands.info]
+default = "safe"
+
+[subcommands.why]
+default = "safe"
+
+[subcommands.run]
+default = "unknown"
+
+[subcommands.test]
+default = "safe"
+
+[subcommands.build]
+default = "safe"
+
+[subcommands.publish]
+default = "write"
+
+[subcommands.init]
+default = "write"
+
+[subcommands.version]
+default = "safe"
+
+[subcommands.workspaces]
+default = "safe"

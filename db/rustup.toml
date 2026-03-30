@@ -1,0 +1,38 @@
+command = "rustup"
+default = "unknown"
+
+[subcommands.show]
+default = "safe"
+
+[subcommands.check]
+default = "safe"
+
+[subcommands.which]
+default = "safe"
+
+[subcommands.doc]
+default = "safe"
+
+[subcommands.update]
+default = "write"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.uninstall]
+default = "write"
+
+[subcommands.default]
+default = "write"
+
+[subcommands.target]
+default = "write"
+
+[subcommands.component]
+default = "write"
+
+[subcommands.toolchain]
+default = "write"
+
+[subcommands.self]
+default = "write"

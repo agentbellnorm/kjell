@@ -1,0 +1,2 @@
+command = "sleep"
+default = "safe"

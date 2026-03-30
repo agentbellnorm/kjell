@@ -1,0 +1,44 @@
+command = "helm"
+default = "unknown"
+
+[subcommands.list]
+default = "safe"
+
+[subcommands.ls]
+default = "safe"
+
+[subcommands.status]
+default = "safe"
+
+[subcommands.get]
+default = "safe"
+
+[subcommands.show]
+default = "safe"
+
+[subcommands.search]
+default = "safe"
+
+[subcommands.repo]
+default = "safe"
+
+[subcommands.version]
+default = "safe"
+
+[subcommands.template]
+default = "safe"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.upgrade]
+default = "write"
+
+[subcommands.uninstall]
+default = "write"
+
+[subcommands.delete]
+default = "write"
+
+[subcommands.rollback]
+default = "write"

@@ -1,0 +1,2 @@
+command = "pg_restore"
+default = "write"

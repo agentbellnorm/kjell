@@ -1,0 +1,35 @@
+command = "uv"
+default = "unknown"
+
+[subcommands.pip]
+default = "unknown"
+
+[subcommands.run]
+default = "unknown"
+
+[subcommands.sync]
+default = "write"
+
+[subcommands.lock]
+default = "write"
+
+[subcommands.add]
+default = "write"
+
+[subcommands.remove]
+default = "write"
+
+[subcommands.init]
+default = "write"
+
+[subcommands.venv]
+default = "write"
+
+[subcommands.version]
+default = "safe"
+
+[subcommands.tree]
+default = "safe"
+
+[subcommands.tool]
+default = "unknown"

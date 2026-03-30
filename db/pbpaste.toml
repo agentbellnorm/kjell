@@ -1,0 +1,2 @@
+command = "pbpaste"
+default = "safe"

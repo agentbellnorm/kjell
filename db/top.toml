@@ -1,0 +1,2 @@
+command = "top"
+default = "safe"

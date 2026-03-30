@@ -1,0 +1,2 @@
+command = "rsync"
+default = "write"

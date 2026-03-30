@@ -1,0 +1,23 @@
+command = "turbo"
+default = "unknown"
+
+[subcommands.run]
+default = "safe"
+
+[subcommands.build]
+default = "safe"
+
+[subcommands.test]
+default = "safe"
+
+[subcommands.lint]
+default = "safe"
+
+[subcommands.prune]
+default = "write"
+
+[subcommands.daemon]
+default = "safe"
+
+[subcommands.ls]
+default = "safe"
