@@ -1,8 +1,10 @@
 package database
 
 import (
+	"embed"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 	"testing/fstest"
 )
@@ -596,5 +598,222 @@ default = "safe"
 	}
 	if def.Default != Safe {
 		t.Errorf("expected default 'safe', got %q", def.Default)
+	}
+}
+
+func TestCommandNames(t *testing.T) {
+	fs := testFS(map[string]string{
+		"grep.toml": `command = "grep"
+default = "safe"`,
+		"rm.toml": `command = "rm"
+default = "write"`,
+		"ls.toml": `command = "ls"
+default = "safe"`,
+	})
+
+	db, err := LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	names := db.CommandNames()
+	sort.Strings(names)
+	expected := []string{"grep", "ls", "rm"}
+	if len(names) != len(expected) {
+		t.Fatalf("expected %d names, got %d", len(expected), len(names))
+	}
+	for i, name := range expected {
+		if names[i] != name {
+			t.Errorf("expected name %q at index %d, got %q", name, i, names[i])
+		}
+	}
+}
+
+func TestLoadEmbeddedErrorPath(t *testing.T) {
+	var empty embed.FS
+	_, err := LoadEmbedded(empty, "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for nonexistent embedded dir")
+	}
+}
+
+func TestMergeCommandDefAllFields(t *testing.T) {
+	base := CommandDef{
+		Command:  "mycmd",
+		Default:  Safe,
+		Reason:   "",
+		Recursive: false,
+		Separator: "",
+		InnerCommandPosition: nil,
+	}
+
+	override := CommandDef{
+		Command:              "mycmd",
+		Default:              Write,
+		Reason:               "overridden reason",
+		Recursive:            true,
+		Separator:            ";",
+		InnerCommandPosition: 2,
+	}
+
+	result := mergeCommandDef(base, override)
+
+	if result.Default != Write {
+		t.Errorf("expected default 'write', got %q", result.Default)
+	}
+	if result.Reason != "overridden reason" {
+		t.Errorf("expected reason 'overridden reason', got %q", result.Reason)
+	}
+	if !result.Recursive {
+		t.Error("expected recursive to be true")
+	}
+	if result.Separator != ";" {
+		t.Errorf("expected separator ';', got %q", result.Separator)
+	}
+	if result.InnerCommandPosition != 2 {
+		t.Errorf("expected inner_command_position 2, got %v", result.InnerCommandPosition)
+	}
+}
+
+func TestLoadFromFSInvalidTOML(t *testing.T) {
+	fs := testFS(map[string]string{
+		"bad.toml": `this is not valid toml [[[`,
+	})
+
+	_, err := LoadFromFS(fs)
+	if err == nil {
+		t.Fatal("expected error for invalid TOML content")
+	}
+}
+
+func TestLoadFromFSSkipsDirectories(t *testing.T) {
+	m := fstest.MapFS{
+		"subdir/placeholder.toml": &fstest.MapFile{Data: []byte(`command = "x"
+default = "safe"`)},
+		"grep.toml": &fstest.MapFile{Data: []byte(`command = "grep"
+default = "safe"`)},
+	}
+
+	db, err := LoadFromFS(m)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should only have loaded grep.toml, not the subdir
+	if db.Commands() != 1 {
+		t.Errorf("expected 1 command (directories skipped), got %d", db.Commands())
+	}
+	if def := db.Lookup("grep"); def == nil {
+		t.Error("expected to find grep")
+	}
+}
+
+func TestNormalizeCommandDefFloat64(t *testing.T) {
+	def := CommandDef{
+		Command:              "test",
+		Default:              Safe,
+		InnerCommandPosition: float64(3.0),
+	}
+
+	normalizeCommandDef(&def)
+
+	pos, ok := def.InnerCommandPosition.(int)
+	if !ok {
+		t.Fatalf("expected InnerCommandPosition to be int after normalization, got %T", def.InnerCommandPosition)
+	}
+	if pos != 3 {
+		t.Errorf("expected InnerCommandPosition 3, got %d", pos)
+	}
+}
+
+func TestValidationInvalidSubcommandClassification(t *testing.T) {
+	fs := testFS(map[string]string{
+		"bad.toml": `command = "foo"
+default = "unknown"
+
+[subcommands.bar]
+default = "dangerous"`,
+	})
+
+	_, err := LoadFromFS(fs)
+	if err == nil {
+		t.Fatal("expected error for invalid subcommand classification")
+	}
+}
+
+func TestMergeCommandDefNilBaseSubcommands(t *testing.T) {
+	base := CommandDef{
+		Command: "mycmd",
+		Default: Safe,
+	}
+	override := CommandDef{
+		Command: "mycmd",
+		Subcommands: map[string]CommandDef{
+			"sub1": {Default: Write},
+		},
+	}
+
+	result := mergeCommandDef(base, override)
+
+	if result.Subcommands == nil {
+		t.Fatal("expected subcommands to be initialized")
+	}
+	if sub, ok := result.Subcommands["sub1"]; !ok || sub.Default != Write {
+		t.Error("expected sub1 with default 'write'")
+	}
+}
+
+func TestLoadFromFSReadFileError(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "unreadable.toml")
+	if err := os.WriteFile(path, []byte(`command = "x"`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(path, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		os.Chmod(path, 0o644)
+	})
+
+	_, err := loadFromFS(os.DirFS(dir), false)
+	if err == nil {
+		t.Fatal("expected error for unreadable file")
+	}
+}
+
+func TestValidationNoDefaultNoSubcommands(t *testing.T) {
+	fs := testFS(map[string]string{
+		"bad.toml": `command = "foo"`,
+	})
+
+	_, err := LoadFromFS(fs)
+	if err == nil {
+		t.Fatal("expected error for command with no default and no subcommands")
+	}
+}
+
+func TestValidationSubcommandsOnly(t *testing.T) {
+	fs := testFS(map[string]string{
+		"git.toml": `command = "git"
+
+[subcommands.log]
+default = "safe"`,
+	})
+
+	db, err := LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	def := db.Lookup("git")
+	if def == nil {
+		t.Fatal("expected to find git")
+	}
+	if def.Default != "" {
+		t.Errorf("expected empty default, got %q", def.Default)
+	}
+	if sub, ok := def.Subcommands["log"]; !ok || sub.Default != Safe {
+		t.Error("expected log subcommand with default 'safe'")
 	}
 }

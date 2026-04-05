@@ -1,6 +1,9 @@
 package classifier
 
 import (
+	"bytes"
+	"log/slog"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -413,5 +416,632 @@ reason = "Verbose output only"
 	if result.Classification != database.Write {
 		t.Errorf("tool deploy --verbose = %s, want write (command-level flag should not downgrade subcommand)",
 			result.Classification)
+	}
+}
+
+// === WithLogger / debug / info coverage ===
+
+func TestWithLogger(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	db := testDB(t)
+	c := New(db, WithLogger(logger))
+
+	result, err := c.Classify("ls")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("expected safe, got %s", result.Classification)
+	}
+	// Logger should have captured some output (debug and info calls)
+	if buf.Len() == 0 {
+		t.Error("expected logger output, got none")
+	}
+}
+
+// === resolveRecursiveFlag: trailing_args_as_shell ===
+
+func TestTrailingArgsAsShell(t *testing.T) {
+	fs := fstest.MapFS{
+		"ls.toml":  {Data: []byte(`command = "ls"` + "\n" + `default = "safe"`)},
+		"rm.toml":  {Data: []byte(`command = "rm"` + "\n" + `default = "write"`)},
+		"mytool.toml": {Data: []byte(`command = "mytool"
+default = "unknown"
+
+[[flags]]
+flag = ["--run"]
+effect = "recursive"
+inner_command_source = "trailing_args_as_shell"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// safe inner command
+	result, err := c.Classify("mytool --run ls")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("mytool --run ls = %s, want safe", result.Classification)
+	}
+
+	// write inner command
+	result, err = c.Classify("mytool --run rm foo")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Write {
+		t.Errorf("mytool --run rm foo = %s, want write", result.Classification)
+	}
+
+	// trailing_args_as_shell with no args after the flag
+	result, err = c.Classify("mytool --run")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("mytool --run (no trailing args) = %s, want unknown", result.Classification)
+	}
+}
+
+// === resolveRecursiveFlag: next_arg_as_shell with missing arg ===
+
+func TestNextArgAsShellMissingArg(t *testing.T) {
+	// sh -c with no argument after -c: the recursive flag cannot extract inner command
+	// so it should fall back to unknown
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify("sh -c")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("sh -c (no arg) = %s, want unknown", result.Classification)
+	}
+}
+
+// === resolveRecursiveFlag: InnerCommandTerminator with only {} args ===
+
+func TestFindExecOnlyPlaceholders(t *testing.T) {
+	// find -exec {} \; — after filtering out {}, cleanArgs is empty,
+	// so resolveRecursiveFlag returns "", and checkFlags treats it as unknown
+	// ("recursive flag, could not extract inner command")
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify(`find . -exec {} \;`)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("find . -exec {} = %s, want unknown", result.Classification)
+	}
+}
+
+// === checkFlags: recursive flag where extraction fails => unknown ===
+
+func TestRecursiveFlagExtractionFails(t *testing.T) {
+	// This tests the path in checkFlags where a recursive flag resolves to ""
+	// and the classifier falls back to unknown.
+	// bash -c (no arg) triggers this: -c is a recursive flag with next_arg_as_shell
+	// but there's no argument after -c.
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify("bash -c")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("bash -c (no arg) = %s, want unknown", result.Classification)
+	}
+}
+
+// === classifyAtDepth: max recursion depth ===
+
+func TestMaxRecursionDepth(t *testing.T) {
+	db := testDB(t)
+	c := New(db)
+
+	// Build a command that chains sudo 12 levels deep (exceeds maxRecursionDepth=10)
+	cmd := "ls"
+	for i := 0; i < 12; i++ {
+		cmd = "sudo " + cmd
+	}
+
+	result, err := c.Classify(cmd)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("deeply nested sudo = %s, want unknown", result.Classification)
+	}
+}
+
+// === argsAfterSubcommand: subcommand is last arg ===
+
+func TestArgsAfterSubcommandLastArg(t *testing.T) {
+	// kubectl exec with no args after exec — triggers nil return
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify("kubectl exec")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// kubectl exec with no separator/inner command falls to subcommand default (unknown)
+	if result.Classification != database.Unknown {
+		t.Errorf("kubectl exec (no args) = %s, want unknown", result.Classification)
+	}
+}
+
+// === worst: first arg empty ===
+
+func TestWorstEmptyFirst(t *testing.T) {
+	got := worst("", database.Write)
+	if got != database.Write {
+		t.Errorf("worst('', write) = %s, want write", got)
+	}
+
+	got = worst("", database.Safe)
+	if got != database.Safe {
+		t.Errorf("worst('', safe) = %s, want safe", got)
+	}
+
+	got = worst("", database.Unknown)
+	if got != database.Unknown {
+		t.Errorf("worst('', unknown) = %s, want unknown", got)
+	}
+}
+
+// === matchFlag: combined short flags ===
+
+func TestCombinedShortFlags(t *testing.T) {
+	// tar -tf where -t is matched inside the combined -tf
+	fs := fstest.MapFS{
+		"tar.toml": {Data: []byte(`command = "tar"
+default = "unknown"
+
+[[flags]]
+flag = ["-t", "--list"]
+effect = "safe"
+reason = "List archive contents"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	result, err := c.Classify("tar -tf archive.tar")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("tar -tf = %s, want safe", result.Classification)
+	}
+}
+
+// === Additional edge cases for full coverage ===
+
+func TestWithLoggerRecursiveCommand(t *testing.T) {
+	// Exercise debug/info logging through recursive and pipeline paths
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	db := testDB(t)
+	c := New(db, WithLogger(logger))
+
+	result, err := c.Classify("sudo cat /etc/hosts | grep foo")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("expected safe, got %s", result.Classification)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "recursive") {
+		t.Error("expected log output to contain 'recursive' trace")
+	}
+}
+
+func TestWithLoggerUnknownCommand(t *testing.T) {
+	// Exercise the info logging path for unknown commands (db miss)
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	db := testDB(t)
+	c := New(db, WithLogger(logger))
+
+	result, err := c.Classify("nonexistent-tool --flag")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("expected unknown, got %s", result.Classification)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "db miss") {
+		t.Error("expected log output to contain 'db miss'")
+	}
+}
+
+// === resolveRecursiveFlag: next_arg_as_shell success path ===
+
+func TestNextArgAsShellSuccess(t *testing.T) {
+	// A command that is recursive with a separator (so top-level extractInnerCommand
+	// fails when separator is absent), but has a recursive flag with next_arg_as_shell.
+	// This ensures the flag-level recursive path is reached and succeeds.
+	fs := fstest.MapFS{
+		"ls.toml": {Data: []byte(`command = "ls"` + "\n" + `default = "safe"`)},
+		"rm.toml": {Data: []byte(`command = "rm"` + "\n" + `default = "write"`)},
+		"runner.toml": {Data: []byte(`command = "runner"
+default = "unknown"
+recursive = true
+separator = "--"
+
+[[flags]]
+flag = ["-c"]
+effect = "recursive"
+inner_command_source = "next_arg_as_shell"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// No "--" separator, so top-level recursive fails. Then -c flag triggers
+	// next_arg_as_shell path which successfully classifies "ls".
+	result, err := c.Classify("runner -c ls")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("runner -c ls = %s, want safe", result.Classification)
+	}
+
+	// Same but with a write command
+	result, err = c.Classify("runner -c rm")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Write {
+		t.Errorf("runner -c rm = %s, want write", result.Classification)
+	}
+}
+
+// === resolveRecursiveFlag: next_arg_as_shell classifyAtDepth error ===
+
+func TestNextArgAsShellParseError(t *testing.T) {
+	// A recursive flag with next_arg_as_shell where the inner command fails to parse.
+	// This covers the err != nil path at line 292.
+	fs := fstest.MapFS{
+		"runner.toml": {Data: []byte(`command = "runner"
+default = "unknown"
+recursive = true
+separator = "--"
+
+[[flags]]
+flag = ["-c"]
+effect = "recursive"
+inner_command_source = "next_arg_as_shell"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// Pass malformed shell as the next arg — should fail to parse
+	result, err := c.Classify(`runner -c "if then"`)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// When parse fails, resolveRecursiveFlag returns "", checkFlags falls back to unknown
+	if result.Classification != database.Unknown {
+		t.Errorf("runner -c 'if then' = %s, want unknown", result.Classification)
+	}
+}
+
+// === resolveRecursiveFlag: trailing_args_as_shell classifyAtDepth error ===
+
+func TestTrailingArgsAsShellParseError(t *testing.T) {
+	fs := fstest.MapFS{
+		"mytool.toml": {Data: []byte(`command = "mytool"
+default = "unknown"
+
+[[flags]]
+flag = ["--run"]
+effect = "recursive"
+inner_command_source = "trailing_args_as_shell"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// Malformed shell after --run
+	result, err := c.Classify(`mytool --run "if then"`)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Unknown {
+		t.Errorf("mytool --run 'if then' = %s, want unknown", result.Classification)
+	}
+}
+
+// === resolveRecursiveFlag: InnerCommandTerminator classifyAtDepth error ===
+
+func TestExecTerminatorParseError(t *testing.T) {
+	// find -exec with a malformed command that triggers a parse error
+	// in the inner classifyAtDepth call
+	fs := fstest.MapFS{
+		"myfind.toml": {Data: []byte(`command = "myfind"
+default = "safe"
+
+[[flags]]
+flag = ["-exec"]
+effect = "recursive"
+inner_command_terminators = [";", "+"]
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// Inner command "if then" is a parse error
+	result, err := c.Classify(`myfind . -exec "if then" \;`)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// Parse error in inner command: resolveRecursiveFlag returns "", fall back to unknown
+	if result.Classification != database.Unknown {
+		t.Errorf("myfind -exec parse_error = %s, want unknown", result.Classification)
+	}
+}
+
+// === Subcommand with flags ===
+
+func TestSubcommandFlags(t *testing.T) {
+	// A subcommand that has its own flags. This covers lines 142-147.
+	fs := fstest.MapFS{
+		"tool.toml": {Data: []byte(`command = "tool"
+default = "unknown"
+
+[subcommands.query]
+default = "safe"
+
+[[subcommands.query.flags]]
+flag = ["--write"]
+effect = "write"
+reason = "writes data"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// Subcommand without the flag: safe
+	result, err := c.Classify("tool query")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("tool query = %s, want safe", result.Classification)
+	}
+
+	// Subcommand with the flag: write
+	result, err = c.Classify("tool query --write")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Write {
+		t.Errorf("tool query --write = %s, want write", result.Classification)
+	}
+}
+
+// === extractInnerCommand: separator present but nothing after it ===
+
+func TestSeparatorAtEnd(t *testing.T) {
+	// kubectl exec pod -- (nothing after --)
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify("kubectl exec pod --")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// Separator found but no args after it — resolveRecursive returns ""
+	// Falls back to subcommand default (unknown)
+	if result.Classification != database.Unknown {
+		t.Errorf("kubectl exec pod -- = %s, want unknown", result.Classification)
+	}
+}
+
+// === extractBetweenFlagAndTerminator: no terminator found (returns inner at EOF) ===
+
+func TestExecNoTerminator(t *testing.T) {
+	// find -exec cat {} without a terminating \; or +
+	// extractBetweenFlagAndTerminator collects args after -exec but never
+	// finds a terminator, so it returns inner (line 351: return inner)
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify("find . -exec cat file")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// "cat file" is extracted (no terminator found, falls through to line 351),
+	// "cat" is safe, so "find . -exec cat file" resolves to safe
+	if result.Classification != database.Safe {
+		t.Errorf("find . -exec cat file (no terminator) = %s, want safe", result.Classification)
+	}
+}
+
+// === extractInnerCommand: separator not found returns nil ===
+
+func TestSeparatorNotPresent(t *testing.T) {
+	// kubectl exec pod (no -- separator at all)
+	db := testDB(t)
+	c := New(db)
+
+	result, err := c.Classify("kubectl exec pod")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// No separator found, resolveRecursive returns "", falls back to subcommand default (unknown)
+	if result.Classification != database.Unknown {
+		t.Errorf("kubectl exec pod = %s, want unknown", result.Classification)
+	}
+}
+
+// === classifyAtDepth: max recursion depth exceeded ===
+
+func TestMaxRecursionDepthViaSubshell(t *testing.T) {
+	// Use sudo chaining to get to depth 10, then a command substitution
+	// pushes to depth 11 which triggers line 429 (depth > maxRecursionDepth).
+	// sudo^10 echo $(ls) -> at depth 10: echo $(ls) -> subshell calls
+	// classifyAtDepth("ls", 11) which hits the max recursion guard.
+	db := testDB(t)
+	c := New(db)
+
+	// Build: sudo sudo ... (10 times) echo $(ls)
+	cmd := "echo $(ls)"
+	for i := 0; i < 10; i++ {
+		cmd = "sudo " + cmd
+	}
+	result, err := c.Classify(cmd)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// The $(ls) at depth 11 returns unknown due to max recursion,
+	// which is worst-cased with echo (safe), resulting in unknown
+	if result.Classification != database.Unknown {
+		t.Errorf("deeply nested with subshell = %s, want unknown", result.Classification)
+	}
+}
+
+// === worst: empty first argument ===
+
+func TestWorstWithEmptyClassifications(t *testing.T) {
+	// Test worst("", x) returns x
+	tests := []struct {
+		a, b database.Classification
+		want database.Classification
+	}{
+		{"", database.Write, database.Write},
+		{"", database.Safe, database.Safe},
+		{"", database.Unknown, database.Unknown},
+		{database.Write, "", database.Write},
+		{database.Safe, "", database.Safe},
+		{database.Unknown, "", database.Unknown},
+		{"", "", ""},
+	}
+	for _, tt := range tests {
+		got := worst(tt.a, tt.b)
+		if got != tt.want {
+			t.Errorf("worst(%q, %q) = %q, want %q", tt.a, tt.b, got, tt.want)
+		}
+	}
+}
+
+// === argsAfterSubcommand: subcommand not found at all ===
+
+func TestArgsAfterSubcommandNotFound(t *testing.T) {
+	// This is different from "subcommand is last arg" — the subcommand
+	// name doesn't appear in args at all (returns nil at line 494).
+	got := argsAfterSubcommand([]string{"get", "pods"}, "exec")
+	if got != nil {
+		t.Errorf("argsAfterSubcommand (not found) = %v, want nil", got)
+	}
+}
+
+// === matchFlag: combined short flags ===
+
+func TestCombinedShortFlagsDirectly(t *testing.T) {
+	// Ensure combined short flags like -tf match -t
+	fs := fstest.MapFS{
+		"tar.toml": {Data: []byte(`command = "tar"
+default = "unknown"
+
+[[flags]]
+flag = ["-t"]
+effect = "safe"
+reason = "List archive contents"
+
+[[flags]]
+flag = ["-x"]
+effect = "write"
+reason = "Extract files"
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// -ft contains -t (not at start, so combined short flags path is used)
+	result, err := c.Classify("tar -ft archive.tar")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Safe {
+		t.Errorf("tar -ft = %s, want safe", result.Classification)
+	}
+
+	// -fx contains -x (not at start), should classify as write
+	result, err = c.Classify("tar -fx archive.tar")
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	if result.Classification != database.Write {
+		t.Errorf("tar -fx = %s, want write", result.Classification)
+	}
+}
+
+// === resolveRecursive: inner classifyAtDepth error ===
+
+func TestResolveRecursiveInnerError(t *testing.T) {
+	// When resolveRecursive extracts an inner command that fails to parse,
+	// it returns "" (line 270-272)
+	fs := fstest.MapFS{
+		"wrap.toml": {Data: []byte(`command = "wrap"
+default = "unknown"
+recursive = true
+inner_command_position = 1
+`)},
+	}
+	db, err := database.LoadFromFS(fs)
+	if err != nil {
+		t.Fatalf("failed to load test DB: %v", err)
+	}
+	c := New(db)
+
+	// The inner command "if" alone is invalid shell, triggers parse error
+	// at depth > 0, causing resolveRecursive to return ""
+	result, err := c.Classify(`wrap "if then"`)
+	if err != nil {
+		t.Fatalf("classify: %v", err)
+	}
+	// resolveRecursive fails, falls through to default (unknown)
+	if result.Classification != database.Unknown {
+		t.Errorf("wrap parse-error = %s, want unknown", result.Classification)
 	}
 }

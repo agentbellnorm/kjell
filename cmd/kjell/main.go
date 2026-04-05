@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -14,13 +15,18 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		printUsage()
-		os.Exit(1)
+	os.Exit(run(os.Args, os.Stdin, os.Stdout, os.Stderr))
+}
+
+func run(osArgs []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int {
+	if len(osArgs) < 2 {
+		printUsage(stderr)
+		return 1
 	}
 
 	// Parse global flags before subcommand
-	args := os.Args[1:]
+	args := make([]string, len(osArgs)-1)
+	copy(args, osArgs[1:])
 	logLevel := ""
 	for i := 0; i < len(args); i++ {
 		if args[i] == "--log" {
@@ -36,19 +42,19 @@ func main() {
 	}
 
 	if len(args) == 0 {
-		printUsage()
-		os.Exit(1)
+		printUsage(stderr)
+		return 1
 	}
 
 	db, err := kjell.LoadDatabase()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error loading database: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "error loading database: %v\n", err)
+		return 1
 	}
 
 	var opts []classifier.Option
 	if logLevel != "" {
-		logger, closeLog := setupLog(logLevel)
+		logger, closeLog := setupLog(logLevel, stderr)
 		if closeLog != nil {
 			defer closeLog()
 		}
@@ -61,33 +67,33 @@ func main() {
 
 	switch args[0] {
 	case "check":
-		runCheck(c, args[1:])
+		return runCheck(c, args[1:], stdin, stdout, stderr)
 	case "db":
-		runDB(db, args[1:])
+		return runDB(db, args[1:], stdout, stderr)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command: %s\n", args[0])
-		printUsage()
-		os.Exit(1)
+		fmt.Fprintf(stderr, "unknown command: %s\n", args[0])
+		printUsage(stderr)
+		return 1
 	}
 }
 
-func setupLog(level string) (*slog.Logger, func()) {
+func setupLog(level string, stderr io.Writer) (*slog.Logger, func()) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not determine home directory: %v\n", err)
+		fmt.Fprintf(stderr, "warning: could not determine home directory: %v\n", err)
 		return nil, nil
 	}
 
 	dir := filepath.Join(home, ".kjell")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not create %s: %v\n", dir, err)
+		fmt.Fprintf(stderr, "warning: could not create %s: %v\n", dir, err)
 		return nil, nil
 	}
 
 	logPath := filepath.Join(dir, "log")
 	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not open log file %s: %v\n", logPath, err)
+		fmt.Fprintf(stderr, "warning: could not open log file %s: %v\n", logPath, err)
 		return nil, nil
 	}
 
@@ -100,7 +106,7 @@ func setupLog(level string) (*slog.Logger, func()) {
 	return logger, func() { f.Close() }
 }
 
-func runCheck(c *classifier.Classifier, args []string) {
+func runCheck(c *classifier.Classifier, args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int {
 	format := "plain"
 	var command string
 
@@ -112,8 +118,8 @@ func runCheck(c *classifier.Classifier, args []string) {
 			i++
 		case "--format":
 			if i+1 >= len(args) {
-				fmt.Fprintln(os.Stderr, "error: --format requires a value")
-				os.Exit(1)
+				fmt.Fprintln(stderr, "error: --format requires a value")
+				return 1
 			}
 			format = args[i+1]
 			i += 2
@@ -124,100 +130,104 @@ func runCheck(c *classifier.Classifier, args []string) {
 	}
 
 	if format == "claude-code" {
-		cmd, err := adapter.ClaudeCodeExtract(os.Stdin)
+		cmd, err := adapter.ClaudeCodeExtract(stdin)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(2)
+			fmt.Fprintf(stderr, "error: %v\n", err)
+			return 2
 		}
 		command = cmd
 	}
 
 	if command == "" {
-		fmt.Fprintln(os.Stderr, "error: no command to classify")
-		os.Exit(1)
+		fmt.Fprintln(stderr, "error: no command to classify")
+		return 1
 	}
 
 	result, err := c.Classify(command)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "error: %v\n", err)
+		return 1
 	}
 
 	switch format {
 	case "plain":
-		fmt.Print(adapter.PlainFormat(result))
+		fmt.Fprint(stdout, adapter.PlainFormat(result))
 	case "json":
 		output, err := adapter.JSONFormat(result)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
+			fmt.Fprintf(stderr, "error: %v\n", err)
+			return 1
 		}
-		fmt.Println(output)
+		fmt.Fprintln(stdout, output)
 	case "claude-code":
 		output, err := adapter.ClaudeCodeFormat(result)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
+			fmt.Fprintf(stderr, "error: %v\n", err)
+			return 1
 		}
 		if output != "" {
-			fmt.Println(output)
+			fmt.Fprintln(stdout, output)
 		}
 	default:
-		fmt.Fprintf(os.Stderr, "unknown format: %s\n", format)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "unknown format: %s\n", format)
+		return 1
 	}
+
+	return 0
 }
 
-func runDB(db *database.Database, args []string) {
+func runDB(db *database.Database, args []string, stdout io.Writer, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: kjell db <subcommand>")
-		os.Exit(1)
+		fmt.Fprintln(stderr, "usage: kjell db <subcommand>")
+		return 1
 	}
 
 	switch args[0] {
 	case "stats":
-		fmt.Printf("Commands in database: %d\n", db.Commands())
+		fmt.Fprintf(stdout, "Commands in database: %d\n", db.Commands())
 	case "lookup":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: kjell db lookup <command>")
-			os.Exit(1)
+			fmt.Fprintln(stderr, "usage: kjell db lookup <command>")
+			return 1
 		}
 		def := db.Lookup(args[1])
 		if def == nil {
-			fmt.Printf("%s: not in database\n", args[1])
-			os.Exit(1)
+			fmt.Fprintf(stdout, "%s: not in database\n", args[1])
+			return 1
 		}
-		fmt.Printf("Command: %s\n", def.Command)
-		fmt.Printf("Default: %s\n", def.Default)
+		fmt.Fprintf(stdout, "Command: %s\n", def.Command)
+		fmt.Fprintf(stdout, "Default: %s\n", def.Default)
 		if def.Recursive {
-			fmt.Println("Recursive: yes")
+			fmt.Fprintln(stdout, "Recursive: yes")
 		}
 		if len(def.Subcommands) > 0 {
-			fmt.Println("Subcommands:")
+			fmt.Fprintln(stdout, "Subcommands:")
 			for name, sub := range def.Subcommands {
-				fmt.Printf("  %s: %s\n", name, sub.Default)
+				fmt.Fprintf(stdout, "  %s: %s\n", name, sub.Default)
 			}
 		}
 		if len(def.Flags) > 0 {
-			fmt.Println("Flags:")
+			fmt.Fprintln(stdout, "Flags:")
 			for _, f := range def.Flags {
-				fmt.Printf("  %s: %s", strings.Join(f.Flag, ", "), f.Effect)
+				fmt.Fprintf(stdout, "  %s: %s", strings.Join(f.Flag, ", "), f.Effect)
 				if f.Reason != "" {
-					fmt.Printf(" (%s)", f.Reason)
+					fmt.Fprintf(stdout, " (%s)", f.Reason)
 				}
-				fmt.Println()
+				fmt.Fprintln(stdout)
 			}
 		}
 	case "validate":
-		fmt.Printf("Database valid: %d commands loaded\n", db.Commands())
+		fmt.Fprintf(stdout, "Database valid: %d commands loaded\n", db.Commands())
 	default:
-		fmt.Fprintf(os.Stderr, "unknown db subcommand: %s\n", args[0])
-		os.Exit(1)
+		fmt.Fprintf(stderr, "unknown db subcommand: %s\n", args[0])
+		return 1
 	}
+
+	return 0
 }
 
-func printUsage() {
-	fmt.Fprintln(os.Stderr, `Usage: kjell [--log [debug|info]] <command> [options]
+func printUsage(stderr io.Writer) {
+	fmt.Fprintln(stderr, `Usage: kjell [--log [debug|info]] <command> [options]
 
 Global options:
   --log [level]  Write classification trace to ~/.kjell/log (default: info)
