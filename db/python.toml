@@ -1,2 +1,8 @@
 command = "python"
 default = "unknown"
+recursive = true
+
+[[flags]]
+flag = ["-c"]
+effect = "recursive"
+inner_command_source = "next_arg_as_python"

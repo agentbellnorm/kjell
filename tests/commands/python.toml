@@ -1,0 +1,131 @@
+## Safe: pure computation and data processing
+[[tests]]
+input = "python -c 'print(1+1)'"
+expect = "safe"
+note = "pure computation"
+
+[[tests]]
+input = "python -c 'import json; json.loads(\"{}\")'"
+expect = "safe"
+note = "json parsing is safe"
+
+[[tests]]
+input = "python -c 'import sys; print(sys.version)'"
+expect = "safe"
+note = "reading sys info"
+
+[[tests]]
+input = "python -c 'import os; print(os.getcwd())'"
+expect = "safe"
+note = "os.getcwd is a read operation"
+
+[[tests]]
+input = "python -c 'import os; os.listdir(\".\")'"
+expect = "safe"
+note = "os.listdir is a read operation"
+
+[[tests]]
+input = "python -c 'import re; re.match(r\"\\d+\", \"123\")'"
+expect = "safe"
+note = "regex matching is safe"
+
+[[tests]]
+input = "python -c 'open(\"file.txt\").read()'"
+expect = "safe"
+note = "open with default mode is read"
+
+[[tests]]
+input = "python -c 'open(\"file.txt\", \"r\").read()'"
+expect = "safe"
+note = "open with explicit read mode"
+
+## Write: filesystem operations
+[[tests]]
+input = "python -c \"import os; os.remove('foo')\""
+expect = "write"
+note = "os.remove deletes a file"
+
+[[tests]]
+input = "python -c 'import shutil; shutil.rmtree(\"/tmp/dir\")'"
+expect = "write"
+note = "shutil.rmtree deletes directory tree"
+
+[[tests]]
+input = "python -c 'import os; os.mkdir(\"/tmp/newdir\")'"
+expect = "write"
+note = "os.mkdir creates a directory"
+
+[[tests]]
+input = "python -c 'open(\"file.txt\", \"w\").write(\"data\")'"
+expect = "write"
+note = "open with write mode"
+
+## Shell recursion: subprocess/os.system classify the inner shell command
+[[tests]]
+input = "python -c 'import subprocess; subprocess.run([\"ls\"])'"
+expect = "safe"
+note = "subprocess.run with safe shell command"
+
+[[tests]]
+input = "python -c 'import subprocess; subprocess.run([\"rm\", \"-rf\", \"/\"])'"
+expect = "write"
+note = "subprocess.run with destructive shell command"
+
+[[tests]]
+input = "python -c 'import os; os.system(\"echo hi\")'"
+expect = "safe"
+note = "os.system with safe shell command"
+
+[[tests]]
+input = "python -c 'import os; os.system(\"rm -rf /\")'"
+expect = "write"
+note = "os.system with destructive shell command"
+
+## Python recursion: exec/eval analyze the inner Python code
+[[tests]]
+input = "python -c 'eval(\"1+1\")'"
+expect = "safe"
+note = "eval with pure expression"
+
+[[tests]]
+input = "python -c 'exec(\"print(1)\")'"
+expect = "safe"
+note = "exec with safe code"
+
+[[tests]]
+input = "python -c 'exec(\"import os; os.remove('foo')\")'"
+expect = "write"
+note = "exec with destructive code"
+
+## Unknown: no -c flag
+[[tests]]
+input = "python script.py"
+expect = "unknown"
+note = "running a script file cannot be analyzed"
+
+[[tests]]
+input = "python"
+expect = "unknown"
+note = "interactive REPL"
+
+## From imports
+[[tests]]
+input = "python -c 'from os import remove; remove(\"foo\")'"
+expect = "write"
+note = "from-imported os.remove"
+
+[[tests]]
+input = "python -c 'from json import loads; loads(\"{}\")'"
+expect = "safe"
+note = "from-imported json.loads is safe"
+
+## python3 variant
+[[tests]]
+input = "python3 -c 'print(\"hello\")'"
+expect = "safe"
+note = "python3 with safe code"
+
+[[tests]]
+input = "python3 -c 'import os; os.unlink(\"file\")'"
+expect = "write"
+note = "python3 os.unlink deletes a file"

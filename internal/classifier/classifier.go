@@ -7,6 +7,7 @@ import (
 
 	"github.com/agentbellnorm/kjell/internal/database"
 	"github.com/agentbellnorm/kjell/internal/parser"
+	"github.com/agentbellnorm/kjell/internal/pyanalyze"
 )
 
 const maxRecursionDepth = 10
@@ -305,6 +306,21 @@ func (c *Classifier) resolveRecursiveFlag(flagDef database.FlagDef, cmd parser.P
 					return ""
 				}
 				return innerResult.Classification
+			}
+		}
+	} else if flagDef.InnerCommandSource == "next_arg_as_python" {
+		// Analyze the next argument as Python source code
+		for i, arg := range cmd.Args {
+			if arg == matchedFlag && i+1 < len(cmd.Args) {
+				shellClassifier := func(shellCmd string) database.Classification {
+					r, err := c.classifyAtDepth(shellCmd, depth+1)
+					if err != nil {
+						return database.Unknown
+					}
+					return r.Classification
+				}
+				pyResult := pyanalyze.Analyze(cmd.Args[i+1], shellClassifier)
+				return pyResult.Classification
 			}
 		}
 	} else if len(flagDef.InnerCommandTerminator) > 0 {
