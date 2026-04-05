@@ -1,6 +1,8 @@
 package database
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"testing/fstest"
 )
@@ -323,5 +325,276 @@ PATCH = "write"`,
 	}
 	if def.Flags[0].Values["GET"] != "safe" {
 		t.Errorf("expected GET -> safe")
+	}
+}
+
+func TestMergeOverridesDefault(t *testing.T) {
+	base := testFS(map[string]string{
+		"grep.toml": `command = "grep"
+default = "safe"`,
+		"rm.toml": `command = "rm"
+default = "write"`,
+	})
+
+	override := testFS(map[string]string{
+		"grep.toml": `command = "grep"
+default = "write"`,
+	})
+
+	db, err := LoadFromFS(base)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	overrideDB, err := LoadFromFS(override)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	db.Merge(overrideDB)
+
+	def := db.Lookup("grep")
+	if def == nil {
+		t.Fatal("expected to find grep")
+	}
+	if def.Default != Write {
+		t.Errorf("expected grep default 'write' after merge, got %q", def.Default)
+	}
+
+	// rm should remain unchanged
+	def = db.Lookup("rm")
+	if def == nil {
+		t.Fatal("expected to find rm")
+	}
+	if def.Default != Write {
+		t.Errorf("expected rm default 'write', got %q", def.Default)
+	}
+}
+
+func TestMergeAddsNewCommand(t *testing.T) {
+	base := testFS(map[string]string{
+		"grep.toml": `command = "grep"
+default = "safe"`,
+	})
+
+	override := testFS(map[string]string{
+		"mycmd.toml": `command = "mycmd"
+default = "write"`,
+	})
+
+	db, err := LoadFromFS(base)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	overrideDB, err := LoadFromFS(override)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	db.Merge(overrideDB)
+
+	if db.Commands() != 2 {
+		t.Errorf("expected 2 commands, got %d", db.Commands())
+	}
+	if def := db.Lookup("mycmd"); def == nil {
+		t.Error("expected to find mycmd after merge")
+	}
+}
+
+func TestMergeSubcommandGranular(t *testing.T) {
+	base := testFS(map[string]string{
+		"git.toml": `command = "git"
+default = "unknown"
+
+[subcommands.log]
+default = "safe"
+
+[subcommands.push]
+default = "write"
+
+[subcommands.status]
+default = "safe"`,
+	})
+
+	// Override only changes push, leaves log and status alone
+	override := testFS(map[string]string{
+		"git.toml": `command = "git"
+
+[subcommands.push]
+default = "safe"`,
+	})
+
+	db, err := LoadFromFS(base)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	overrideDB, err := loadFromFS(override, true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	db.Merge(overrideDB)
+
+	def := db.Lookup("git")
+	if def == nil {
+		t.Fatal("expected to find git")
+	}
+	// default preserved
+	if def.Default != Unknown {
+		t.Errorf("expected default 'unknown', got %q", def.Default)
+	}
+	// push overridden
+	if sub, ok := def.Subcommands["push"]; !ok || sub.Default != Safe {
+		t.Errorf("expected push to be overridden to 'safe'")
+	}
+	// log preserved
+	if sub, ok := def.Subcommands["log"]; !ok || sub.Default != Safe {
+		t.Errorf("expected log to remain 'safe'")
+	}
+	// status preserved
+	if sub, ok := def.Subcommands["status"]; !ok || sub.Default != Safe {
+		t.Errorf("expected status to remain 'safe'")
+	}
+}
+
+func TestMergeFlagGranular(t *testing.T) {
+	base := testFS(map[string]string{
+		"curl.toml": `command = "curl"
+default = "safe"
+
+[[flags]]
+flag = ["-X", "--request"]
+effect = "unknown"
+
+[[flags]]
+flag = ["-o", "--output"]
+effect = "write"`,
+	})
+
+	// Override -X to be safe, leave -o alone
+	override := testFS(map[string]string{
+		"curl.toml": `command = "curl"
+
+[[flags]]
+flag = ["-X"]
+effect = "safe"`,
+	})
+
+	db, err := LoadFromFS(base)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	overrideDB, err := loadFromFS(override, true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	db.Merge(overrideDB)
+
+	def := db.Lookup("curl")
+	if def == nil {
+		t.Fatal("expected to find curl")
+	}
+	if len(def.Flags) != 2 {
+		t.Fatalf("expected 2 flags, got %d", len(def.Flags))
+	}
+	// -X overridden
+	if def.Flags[0].Effect != "safe" {
+		t.Errorf("expected -X effect 'safe', got %q", def.Flags[0].Effect)
+	}
+	// -o preserved
+	if def.Flags[1].Effect != "write" {
+		t.Errorf("expected -o effect 'write', got %q", def.Flags[1].Effect)
+	}
+}
+
+func TestMergeAddsNewFlag(t *testing.T) {
+	base := testFS(map[string]string{
+		"foo.toml": `command = "foo"
+default = "safe"
+
+[[flags]]
+flag = ["-v"]
+effect = "safe"`,
+	})
+
+	override := testFS(map[string]string{
+		"foo.toml": `command = "foo"
+
+[[flags]]
+flag = ["-w"]
+effect = "write"`,
+	})
+
+	db, err := LoadFromFS(base)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	overrideDB, err := loadFromFS(override, true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	db.Merge(overrideDB)
+
+	def := db.Lookup("foo")
+	if def == nil {
+		t.Fatal("expected to find foo")
+	}
+	if len(def.Flags) != 2 {
+		t.Fatalf("expected 2 flags after merge, got %d", len(def.Flags))
+	}
+}
+
+func TestLoadDirPartialValidation(t *testing.T) {
+	dir := t.TempDir()
+	// Only command + subcommand, no default — valid as override
+	err := os.WriteFile(filepath.Join(dir, "git.toml"), []byte(`command = "git"
+
+[subcommands.push]
+default = "safe"
+`), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	def := db.Lookup("git")
+	if def == nil {
+		t.Fatal("expected to find git")
+	}
+	if sub, ok := def.Subcommands["push"]; !ok || sub.Default != Safe {
+		t.Error("expected push subcommand with default 'safe'")
+	}
+}
+
+func TestLoadDir(t *testing.T) {
+	dir := t.TempDir()
+	err := os.WriteFile(filepath.Join(dir, "mycmd.toml"), []byte(`command = "mycmd"
+default = "safe"
+`), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	def := db.Lookup("mycmd")
+	if def == nil {
+		t.Fatal("expected to find mycmd")
+	}
+	if def.Default != Safe {
+		t.Errorf("expected default 'safe', got %q", def.Default)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -70,8 +71,95 @@ func (db *Database) CommandNames() []string {
 	return names
 }
 
+// Merge merges another database into this one. The override database takes
+// precedence at every level: command default, individual subcommands, and
+// individual flags (matched by any overlapping flag name).
+func (db *Database) Merge(override *Database) {
+	for name, overrideDef := range override.commands {
+		if baseDef, ok := db.commands[name]; ok {
+			db.commands[name] = mergeCommandDef(baseDef, overrideDef)
+		} else {
+			db.commands[name] = overrideDef
+		}
+	}
+}
+
+func mergeCommandDef(base, override CommandDef) CommandDef {
+	result := base
+
+	if override.Default != "" {
+		result.Default = override.Default
+	}
+	if override.Reason != "" {
+		result.Reason = override.Reason
+	}
+	if override.Recursive {
+		result.Recursive = true
+	}
+	if override.Separator != "" {
+		result.Separator = override.Separator
+	}
+	if override.InnerCommandPosition != nil {
+		result.InnerCommandPosition = override.InnerCommandPosition
+	}
+
+	// Merge subcommands by name
+	if len(override.Subcommands) > 0 {
+		if result.Subcommands == nil {
+			result.Subcommands = make(map[string]CommandDef)
+		}
+		for name, sub := range override.Subcommands {
+			result.Subcommands[name] = sub
+		}
+	}
+
+	// Merge flags — match by any overlapping flag name, replace if matched, append if new
+	if len(override.Flags) > 0 {
+		merged := make([]FlagDef, len(result.Flags))
+		copy(merged, result.Flags)
+		for _, oflag := range override.Flags {
+			found := false
+			for i, bflag := range merged {
+				if flagsOverlap(bflag.Flag, oflag.Flag) {
+					merged[i] = oflag
+					found = true
+					break
+				}
+			}
+			if !found {
+				merged = append(merged, oflag)
+			}
+		}
+		result.Flags = merged
+	}
+
+	return result
+}
+
+func flagsOverlap(a, b []string) bool {
+	for _, af := range a {
+		for _, bf := range b {
+			if af == bf {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// LoadDir loads command definitions from TOML files in a directory on disk.
+// It uses partial validation since these are override files that may only
+// specify the fields they want to change.
+func LoadDir(path string) (*Database, error) {
+	return loadFromFS(os.DirFS(path), true)
+}
+
 // LoadFromFS loads command definitions from TOML files in a filesystem.
 func LoadFromFS(fsys fs.FS) (*Database, error) {
+	return loadFromFS(fsys, false)
+}
+
+func loadFromFS(fsys fs.FS, partial bool) (*Database, error) {
 	db := &Database{commands: make(map[string]CommandDef)}
 
 	entries, err := fs.ReadDir(fsys, ".")
@@ -94,7 +182,7 @@ func LoadFromFS(fsys fs.FS) (*Database, error) {
 			return nil, fmt.Errorf("parsing %s: %w", entry.Name(), err)
 		}
 
-		if err := validateCommandDef(entry.Name(), &def); err != nil {
+		if err := validateCommandDef(entry.Name(), &def, partial); err != nil {
 			return nil, err
 		}
 
@@ -114,13 +202,14 @@ func LoadEmbedded(embedded embed.FS, dir string) (*Database, error) {
 	return LoadFromFS(sub)
 }
 
-func validateCommandDef(filename string, def *CommandDef) error {
+func validateCommandDef(filename string, def *CommandDef, partial bool) error {
 	if def.Command == "" {
 		return fmt.Errorf("%s: missing required field 'command'", filename)
 	}
 
-	// Commands must have a default classification OR subcommands
-	if def.Default == "" && len(def.Subcommands) == 0 {
+	// Full definitions must have a default classification OR subcommands.
+	// Partial (override) definitions only need the command name.
+	if !partial && def.Default == "" && len(def.Subcommands) == 0 {
 		return fmt.Errorf("%s: command %q must have 'default' or 'subcommands'", filename, def.Command)
 	}
 
