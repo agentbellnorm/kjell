@@ -27,3 +27,6 @@ default = "write"
 
 [subcommands.doc]
 default = "safe"
+
+[subcommands.tool]
+default = "safe"
