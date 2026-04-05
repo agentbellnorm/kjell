@@ -2,6 +2,7 @@ package classifier
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/agentbellnorm/kjell/internal/database"
@@ -26,12 +27,37 @@ type ClassifyResult struct {
 
 // Classifier classifies shell commands against a database.
 type Classifier struct {
-	db *database.Database
+	db     *database.Database
+	logger *slog.Logger
+}
+
+// Option configures a Classifier.
+type Option func(*Classifier)
+
+// WithLogger sets a logger for debug tracing of classification decisions.
+func WithLogger(l *slog.Logger) Option {
+	return func(c *Classifier) { c.logger = l }
 }
 
 // New creates a new Classifier with the given database.
-func New(db *database.Database) *Classifier {
-	return &Classifier{db: db}
+func New(db *database.Database, opts ...Option) *Classifier {
+	c := &Classifier{db: db}
+	for _, o := range opts {
+		o(c)
+	}
+	return c
+}
+
+func (c *Classifier) debug(msg string, args ...any) {
+	if c.logger != nil {
+		c.logger.Debug(msg, args...)
+	}
+}
+
+func (c *Classifier) info(msg string, args ...any) {
+	if c.logger != nil {
+		c.logger.Info(msg, args...)
+	}
 }
 
 // Classify parses and classifies a shell command string.
@@ -50,6 +76,7 @@ func (c *Classifier) classifyPipeline(pipeline parser.ParsedPipeline, result *Cl
 		pipeClass = worst(pipeClass, cmdClass)
 	}
 
+	c.debug("pipeline result", "classification", pipeClass)
 	return pipeClass
 }
 
@@ -58,21 +85,28 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 
 	// Unknown command
 	if def == nil {
+		c.debug("db miss", "command", cmd.Command)
+		reason := fmt.Sprintf("%s: not in database", cmd.Command)
+		c.info("classified", "command", cmd.Command, "classification", database.Unknown, "reason", reason)
 		comp := ComponentResult{
 			Command:        cmd.Command,
 			Classification: database.Unknown,
-			Reason:         fmt.Sprintf("%s: not in database", cmd.Command),
+			Reason:         reason,
 		}
 		result.Components = append(result.Components, comp)
 		return database.Unknown
 	}
 
+	c.debug("db hit", "command", cmd.Command, "default", def.Default, "recursive", def.Recursive)
+
 	// Handle recursive commands (sudo, env, etc.)
 	if def.Recursive && depth < maxRecursionDepth {
 		innerClass := c.resolveRecursive(def, cmd, result, depth)
 		if innerClass != "" {
+			c.debug("recursive resolved", "command", cmd.Command, "inner_classification", innerClass)
 			return innerClass
 		}
+		c.debug("recursive extraction failed", "command", cmd.Command)
 		// If extraction failed, fall through to default
 	}
 
@@ -87,6 +121,7 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 			subcommandMatched = true
 			cmdClass = subDef.Default
 			reason = fmt.Sprintf("%s %s: %s", cmd.Command, subName, subDef.Default)
+			c.debug("subcommand matched", "command", cmd.Command, "subcommand", subName, "classification", subDef.Default)
 
 			// Handle recursive subcommands (e.g. kubectl exec pod -- ls)
 			if subDef.Recursive && depth < maxRecursionDepth {
@@ -143,6 +178,7 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 			comp.Command = cmd.Command + " " + sub
 		}
 	}
+	c.info("classified", "command", comp.Command, "classification", cmdClass, "reason", reason)
 	result.Components = append(result.Components, comp)
 
 	return cmdClass
@@ -157,6 +193,8 @@ func (c *Classifier) checkFlags(cmd parser.ParsedCommand, flagDefs []database.Fl
 		if !matched {
 			continue
 		}
+
+		c.debug("flag matched", "command", cmd.Command, "flag", matchedName, "effect", flagDef.Effect, "value", matchedValue)
 
 		switch flagDef.Effect {
 		case "recursive":
@@ -233,10 +271,12 @@ func (c *Classifier) resolveRecursive(def *database.CommandDef, cmd parser.Parse
 		return ""
 	}
 
+	reason := fmt.Sprintf("%s wraps: %s", cmd.Command, innerCmd)
+	c.info("classified", "command", cmd.Command, "classification", innerResult.Classification, "reason", reason)
 	result.Components = append(result.Components, ComponentResult{
 		Command:        cmd.Command,
 		Classification: innerResult.Classification,
-		Reason:         fmt.Sprintf("%s wraps: %s", cmd.Command, innerCmd),
+		Reason:         reason,
 	})
 
 	return innerResult.Classification
@@ -384,7 +424,10 @@ func looksLikeFlagValue(s string) bool {
 }
 
 func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, error) {
+	c.debug("classify", "input", input, "depth", depth)
+
 	if depth > maxRecursionDepth {
+		c.debug("max recursion depth exceeded", "input", input, "depth", depth)
 		return &ClassifyResult{
 			Input:          input,
 			Classification: database.Unknown,
@@ -393,6 +436,7 @@ func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, 
 
 	expr, err := parser.Parse(input)
 	if err != nil {
+		c.debug("parse error", "input", input, "error", err)
 		if depth == 0 {
 			return nil, fmt.Errorf("parsing: %w", err)
 		}
@@ -410,6 +454,7 @@ func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, 
 	}
 
 	for _, sub := range expr.Subshells {
+		c.debug("command substitution", "subshell", sub, "depth", depth)
 		subResult, err := c.classifyAtDepth(sub, depth+1)
 		if err == nil {
 			result.Classification = worst(result.Classification, subResult.Classification)
@@ -423,6 +468,7 @@ func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, 
 
 	for _, redir := range expr.Redirects {
 		if isWriteRedirect(redir) {
+			c.debug("write redirect", "type", redir.Type, "target", redir.Target)
 			result.Classification = database.Write
 			result.Components = append(result.Components, ComponentResult{
 				Command:        redir.Type + " " + redir.Target,
@@ -432,6 +478,7 @@ func (c *Classifier) classifyAtDepth(input string, depth int) (*ClassifyResult, 
 		}
 	}
 
+	c.debug("result", "input", input, "classification", result.Classification, "depth", depth)
 	return result, nil
 }
 

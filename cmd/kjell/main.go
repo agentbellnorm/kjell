@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 
 	kjell "github.com/agentbellnorm/kjell"
@@ -17,24 +19,85 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Parse global flags before subcommand
+	args := os.Args[1:]
+	logLevel := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--log" {
+			logLevel = "info"
+			if i+1 < len(args) && (args[i+1] == "debug" || args[i+1] == "info") {
+				logLevel = args[i+1]
+				args = append(args[:i], args[i+2:]...)
+			} else {
+				args = append(args[:i], args[i+1:]...)
+			}
+			break
+		}
+	}
+
+	if len(args) == 0 {
+		printUsage()
+		os.Exit(1)
+	}
+
 	db, err := kjell.LoadDatabase()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error loading database: %v\n", err)
 		os.Exit(1)
 	}
 
-	c := classifier.New(db)
+	var opts []classifier.Option
+	if logLevel != "" {
+		logger, closeLog := setupLog(logLevel)
+		if closeLog != nil {
+			defer closeLog()
+		}
+		if logger != nil {
+			opts = append(opts, classifier.WithLogger(logger))
+		}
+	}
 
-	switch os.Args[1] {
+	c := classifier.New(db, opts...)
+
+	switch args[0] {
 	case "check":
-		runCheck(c, os.Args[2:])
+		runCheck(c, args[1:])
 	case "db":
-		runDB(db, os.Args[2:])
+		runDB(db, args[1:])
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown command: %s\n", args[0])
 		printUsage()
 		os.Exit(1)
 	}
+}
+
+func setupLog(level string) (*slog.Logger, func()) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not determine home directory: %v\n", err)
+		return nil, nil
+	}
+
+	dir := filepath.Join(home, ".kjell")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not create %s: %v\n", dir, err)
+		return nil, nil
+	}
+
+	logPath := filepath.Join(dir, "log")
+	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not open log file %s: %v\n", logPath, err)
+		return nil, nil
+	}
+
+	slogLevel := slog.LevelInfo
+	if level == "debug" {
+		slogLevel = slog.LevelDebug
+	}
+
+	logger := slog.New(slog.NewTextHandler(f, &slog.HandlerOptions{Level: slogLevel}))
+	return logger, func() { f.Close() }
 }
 
 func runCheck(c *classifier.Classifier, args []string) {
@@ -154,7 +217,10 @@ func runDB(db *database.Database, args []string) {
 }
 
 func printUsage() {
-	fmt.Fprintln(os.Stderr, `Usage: kjell <command> [options]
+	fmt.Fprintln(os.Stderr, `Usage: kjell [--log [debug|info]] <command> [options]
+
+Global options:
+  --log [level]  Write classification trace to ~/.kjell/log (default: info)
 
 Commands:
   check [--json] [--format <format>] <command>
