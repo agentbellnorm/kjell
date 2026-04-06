@@ -38,9 +38,16 @@ $ kjell check 'for f in *.log; do rm "$f"; done'               # WRITE
 # Deep nesting — sudo → env → bash -c → actual command
 $ kjell check "sudo env CI=1 bash -c 'grep -r TODO src/'"     # SAFE
 $ kjell check "sudo env CI=1 bash -c 'find /tmp -name *.cache -delete'" # WRITE
+
+# Python -c — analyzes the Python code
+$ kjell check "python3 -c 'import json; json.loads(\"{}\")'"  # SAFE (pure computation)
+$ kjell check "python3 -c 'import os; os.remove(\"foo\")'"    # WRITE (file deletion)
+$ kjell check "python3 -c 'import os; os.system(\"ls -la\")'" # SAFE (shell recursion)
+$ kjell check "python3 -c 'open(\"f.txt\", \"w\").write(\"x\")'" # WRITE (file write)
+$ kjell check "python3 script.py"                              # UNKNOWN (can't analyze)
 ```
 
-It handles pipes, redirects, `&&`/`||`, command substitution, loops, conditionals, and recursive wrappers (`sudo`, `env`, `xargs`, `sh -c`, `find -exec`, `docker exec --`). 100+ commands with flag-level granularity. Proper bash parser, not regex.
+It handles pipes, redirects, `&&`/`||`, command substitution, loops, conditionals, recursive wrappers (`sudo`, `env`, `xargs`, `sh -c`, `find -exec`, `docker exec --`), and `python -c` code analysis. 100+ commands with flag-level granularity. Proper bash parser, not regex.
 
 ## Claude Code
 
