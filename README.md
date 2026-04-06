@@ -51,7 +51,7 @@ It handles pipes, redirects, `&&`/`||`, command substitution, loops, conditional
 
 ## Claude Code
 
-Add to `.claude/settings.json`:
+Add to `~/.claude/settings.json`:
 
 ```json
 {
