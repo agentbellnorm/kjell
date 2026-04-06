@@ -19,11 +19,32 @@ default = "write"
 [subcommands.get]
 default = "write"
 
+[subcommands.env]
+default = "safe"
+
 [subcommands.vet]
 default = "safe"
 
+[subcommands.clean]
+default = "safe"
+
+[subcommands.install]
+default = "write"
+
+[subcommands.generate]
+default = "write"
+
+[subcommands.fix]
+default = "write"
+
+[subcommands.work]
+default = "write"
+
 [subcommands.fmt]
 default = "write"
+
+[subcommands.list]
+default = "safe"
 
 [subcommands.doc]
 default = "safe"
