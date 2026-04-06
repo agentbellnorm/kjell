@@ -88,7 +88,7 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 	if def == nil {
 		c.debug("db miss", "command", cmd.Command)
 		reason := fmt.Sprintf("%s: not in database", cmd.Command)
-		c.info("classified", "command", cmd.Command, "classification", database.Unknown, "reason", reason)
+		c.info("classified", "command", cmd.Command, "input", result.Input, "classification", database.Unknown, "reason", reason)
 		comp := ComponentResult{
 			Command:        cmd.Command,
 			Classification: database.Unknown,
@@ -179,7 +179,7 @@ func (c *Classifier) classifyCommand(cmd parser.ParsedCommand, result *ClassifyR
 			comp.Command = cmd.Command + " " + sub
 		}
 	}
-	c.info("classified", "command", comp.Command, "classification", cmdClass, "reason", reason)
+	c.info("classified", "command", comp.Command, "input", result.Input, "classification", cmdClass, "reason", reason)
 	result.Components = append(result.Components, comp)
 
 	return cmdClass
@@ -273,7 +273,7 @@ func (c *Classifier) resolveRecursive(def *database.CommandDef, cmd parser.Parse
 	}
 
 	reason := fmt.Sprintf("%s wraps: %s", cmd.Command, innerCmd)
-	c.info("classified", "command", cmd.Command, "classification", innerResult.Classification, "reason", reason)
+	c.info("classified", "command", cmd.Command, "input", result.Input, "classification", innerResult.Classification, "reason", reason)
 	result.Components = append(result.Components, ComponentResult{
 		Command:        cmd.Command,
 		Classification: innerResult.Classification,
