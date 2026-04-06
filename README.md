@@ -120,6 +120,13 @@ reason = "Modifies files"
 
 Tests go in `tests/commands/` in the same format. Run with `go test ./...` (319 tests).
 
+## Dependencies
+
+Both dependencies are pure Go — no CGo, no C toolchain required:
+
+- [mvdan.cc/sh](https://github.com/mvdan/sh) — bash parser for shell command analysis
+- [gotreesitter](https://github.com/odvcencio/gotreesitter) — tree-sitter runtime for Python code analysis
+
 ## Local overrides
 
 Drop TOML files in `~/.kjell/db/` to add or override command definitions without modifying the built-in database. Files use the same format as above and are merged by command name — your local definitions take precedence.
